@@ -1,5 +1,11 @@
 # jats-xml
 
+## 0.0.11
+
+### Patch Changes
+
+- Use peer-dependencies for myst
+
 ## 0.0.10
 
 ### Patch Changes
