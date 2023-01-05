@@ -1,6 +1,6 @@
 {
   "name": "jats-xml",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Types and utilities for working with JATS in Typescript",
   "author": "Rowan Cockett <rowan@curvenote.com>",
   "homepage": "https://github.com/curvenote/jats-xml",
@@ -57,10 +57,7 @@
   },
   "peerDependencies": {
     "chalk": "^4.1.2",
-    "commander": "^8.3.0",
-    "myst-cli-utils": "*",
-    "myst-common": "*",
-    "myst-frontmatter": "*"
+    "commander": "^8.3.0"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.0",

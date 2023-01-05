@@ -1,6 +1,6 @@
 # jats-xml
 
-## 0.0.12
+## 0.0.13
 
 ### Patch Changes
 
