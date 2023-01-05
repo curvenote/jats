@@ -1,5 +1,9 @@
 # jats-xml
 
+[![jats-xml on npm](https://img.shields.io/npm/v/jats-xml.svg)](https://www.npmjs.com/package/jats-xml)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/curvenote/jats-xml/blob/main/LICENSE)
+[![CI](https://github.com/curvenote/jats-xml/workflows/CI/badge.svg)](https://github.com/curvenote/jats-xml/actions)
+
 Types and utilities for working with JATS XML documents in Node and Typescript.
 
 Read and write JATS XML from node or see summries from the command line.
@@ -26,7 +30,7 @@ Commands available:
 `download`: attempt to find the JATS file and download it locally.
 
 ```bash
-jats download https://docs.python.org/3.7 article.jats
+jats download https://elifesciences.org/articles/81952 article.jats
 ```
 
 Note, currently this just downloads the XML, **not** the associated files.
