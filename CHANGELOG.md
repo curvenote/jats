@@ -1,5 +1,11 @@
 # jats-xml
 
+## 0.0.10
+
+### Patch Changes
+
+- aed76d7: Less selective on unist-util-select dependency
+
 ## 0.0.9
 
 ### Patch Changes
