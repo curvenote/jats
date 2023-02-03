@@ -15,7 +15,7 @@ import type {
   RefList,
   Reference,
   TitleGroup,
-  ArtileTitle,
+  ArticleTitle,
   Subtitle,
   Permissions,
   PubDate,
@@ -138,8 +138,8 @@ export class Jats {
     return select<TitleGroup>(Tags.titleGroup, this.front);
   }
 
-  get articleTitle(): ArtileTitle | undefined {
-    return select<ArtileTitle>(Tags.articleTitle, this.titleGroup);
+  get articleTitle(): ArticleTitle | undefined {
+    return select<ArticleTitle>(Tags.articleTitle, this.titleGroup);
   }
 
   get articleSubtitle(): Subtitle | undefined {

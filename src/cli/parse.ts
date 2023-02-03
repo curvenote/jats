@@ -4,13 +4,14 @@ import { extname } from 'path';
 import { clirun, isUrl, tic, writeFileToFolder } from 'myst-cli-utils';
 import doi from 'doi-utils';
 import chalk from 'chalk';
+import { formatPrinciples, highlightFAIR } from 'fair-principles';
 import { getSession } from '../session';
 import type { ISession, Options } from '../types';
 import { Tags } from '../types';
 import { Jats } from '../jats';
 import { toText } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
-import { downloadJatsFromUrl } from '../download';
+import { downloadJatsFromUrl } from './download';
 import { DEFAULT_RESOLVERS } from '../resolvers';
 import { findArticleId, formatDate, toDate } from '../utils';
 
@@ -37,9 +38,26 @@ async function downloadAndSaveJats(
       )} is not a valid extension for JATS, try using ".xml" or ".jats"`,
     );
   }
-  const { data } = await downloadJatsFromUrl(session, urlOrDoi, opts);
+  const { success, data, source } = await downloadJatsFromUrl(session, urlOrDoi, opts);
+  if (!success || !data) {
+    logAboutJatsFailing(session, [source]);
+    process.exit(1);
+  }
   writeFileToFolder(output, data);
   return data;
+}
+
+function logAboutJatsFailing(session: ISession, jatsUrls: string[]) {
+  session.log.warn(
+    '⛔️ JATS may not be Open Access 😭, you should petition your local representative 🪧',
+  );
+  session.log.info(
+    `${chalk.green(`\nThe XML ${chalk.bold('should')} be here:\n\n${jatsUrls.join('\n')}`)}\n`,
+  );
+  const FAIR = highlightFAIR('A', { chalk });
+  session.log.info(`Some publishers aggressively block programmatic access, which isn't ${FAIR}.`);
+  session.log.debug(formatPrinciples('A*', { chalk }));
+  session.log.info(`\n${chalk.blue('The link may work in a browser.')}\n`);
 }
 
 async function parseJats(
@@ -53,7 +71,11 @@ async function parseJats(
     const data = fs.readFileSync(file).toString();
     return new Jats(data, { log: session.log });
   }
-  const { source, data } = await downloadJatsFromUrl(session, file, opts);
+  const { success, source, data } = await downloadJatsFromUrl(session, file, opts);
+  if (!success || !data) {
+    logAboutJatsFailing(session, [source]);
+    process.exit(1);
+  }
   const jats = new Jats(data, { source, log: session.log });
   session.log.debug(toc(`Downloaded and parsed JATS file in %s`));
   return jats;

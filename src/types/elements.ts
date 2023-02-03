@@ -37,10 +37,10 @@ export type Reference = GenericParent & {
 
 export type TitleGroup = GenericParent & {
   type: Tags.titleGroup;
-  children: (ArtileTitle | Subtitle)[];
+  children: (ArticleTitle | Subtitle)[];
 };
 
-export type ArtileTitle = GenericParent & {
+export type ArticleTitle = GenericParent & {
   type: Tags.articleTitle;
 };
 

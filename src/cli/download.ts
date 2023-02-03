@@ -1,25 +1,11 @@
 import doi from 'doi-utils';
-import chalk from 'chalk';
 import fetch from 'node-fetch';
 import { isUrl, tic } from 'myst-cli-utils';
-import { formatPrinciples, highlightFAIR } from 'fair-principles';
-import type { ISession, Options } from './types';
-import { customResolveJatsUrlFromDoi } from './resolvers';
 
-function logAboutJatsFailing(session: ISession, jatsUrls: string[]) {
-  session.log.warn(
-    '⛔️ JATS may not be Open Access 😭, you should petition your local representative 🪧',
-  );
-  session.log.info(
-    `${chalk.green(`\nThe XML ${chalk.bold('should')} be here:\n\n${jatsUrls.join('\n')}`)}\n`,
-  );
-  const FAIR = highlightFAIR('A', { chalk });
-  session.log.info(`Some publishers aggressively block programmatic access, which isn't ${FAIR}.`);
-  session.log.debug(formatPrinciples('A*', { chalk }));
-  session.log.info(`${chalk.blue('The link may work in a browser.')}\n`);
-}
+import type { ISession, Options } from '../types';
+import { customResolveJatsUrlFromDoi } from '../resolvers';
 
-async function dowloadFromUrl(session: ISession, jatsUrl: string, opts: Options): Promise<string> {
+async function downloadFromUrl(session: ISession, jatsUrl: string, opts: Options): Promise<string> {
   const toc = tic();
   session.log.debug(`Fetching JATS from ${jatsUrl}`);
   const resp = await (opts?.fetcher ?? defaultFetcher)(jatsUrl, 'xml');
@@ -36,9 +22,7 @@ async function dowloadFromUrl(session: ISession, jatsUrl: string, opts: Options)
     )
   ) {
     session.log.warn(
-      `Expected content-type "application/xml" instead we got "${contentType}" for ${jatsUrl}\n${chalk.dim(
-        'Things may not work, but we are going to try our best...',
-      )}`,
+      `Expected content-type "application/xml" instead we got "${contentType}" for ${jatsUrl}`,
     );
   }
   const data = await resp.text();
@@ -190,7 +174,7 @@ export async function downloadJatsFromUrl(
   session: ISession,
   urlOrDoi: string,
   opts: Options = {},
-): Promise<{ source: string; data: string }> {
+): Promise<{ success: boolean; source: string; data?: string }> {
   const expectedUrls = (
     await Promise.all([
       checkIfPubMedCentralHasJats(session, urlOrDoi, opts),
@@ -202,26 +186,26 @@ export async function downloadJatsFromUrl(
     for (let index = 0; index < expectedUrls.length; index++) {
       const url = expectedUrls[index];
       try {
-        const data = await dowloadFromUrl(session, url, opts);
-        if (data) return { source: url, data };
+        const data = await downloadFromUrl(session, url, opts);
+        if (data) return { success: true, source: url, data };
       } catch (error) {
         session.log.debug((error as Error).message);
       }
     }
     // If there are expected URLs that don't work: see something, say something, etc.
-    logAboutJatsFailing(session, expectedUrls);
+    return { success: false, source: expectedUrls[0] };
   }
   if (doi.validate(urlOrDoi)) {
     const jatsUrl = await customResolveJatsUrlFromDoi(session, urlOrDoi, opts);
-    const data = await dowloadFromUrl(session, jatsUrl, opts);
-    return { source: jatsUrl, data };
+    const data = await downloadFromUrl(session, jatsUrl, opts);
+    return { success: true, source: jatsUrl, data };
   }
   if (isUrl(urlOrDoi)) {
     session.log.debug(
       "No resolver matched, and the URL doesn't look like a DOI. We will attempt to download it directly.",
     );
-    const data = await dowloadFromUrl(session, urlOrDoi, opts);
-    return { source: urlOrDoi, data };
+    const data = await downloadFromUrl(session, urlOrDoi, opts);
+    return { success: true, source: urlOrDoi, data };
   }
   throw new Error(`Could not find ${urlOrDoi} locally, and it doesn't look like a URL or DOI`);
 }
