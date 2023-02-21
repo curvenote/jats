@@ -35,7 +35,7 @@ jats download https://elifesciences.org/articles/81952 article.jats
 
 Note, currently this just downloads the XML, **not** the associated files.
 
-`sumamry`: summarize the contents of the JATS, given a URL, DOI, or local file
+`summary`: summarize the contents of the JATS, given a URL, DOI, or local file
 
 ```bash
 jats summary https://elifesciences.org/articles/81952
