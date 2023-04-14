@@ -53,6 +53,8 @@
     "node-fetch": "^2.6.7",
     "unist-util-remove": "^3.1.0",
     "unist-util-select": "^4.0.0",
+    "unzipper": "^0.10.11",
+    "which": "^2.0.2",
     "xml-js": "^1.6.11"
   },
   "peerDependencies": {
@@ -63,6 +65,8 @@
     "@changesets/cli": "^2.26.0",
     "@types/jest": "^28.1.6",
     "@types/node-fetch": "^2.6.2",
+    "@types/unzipper": "^0.10.5",
+    "@types/which": "^2.0.1",
     "chalk": "^4.1.2",
     "commander": "^8.3.0",
     "esbuild": "^0.15.12",
