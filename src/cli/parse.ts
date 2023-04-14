@@ -229,7 +229,7 @@ function makeDownloadCLI(program: Command) {
   const command = new Command('download')
     .description('Parse a JATS file and provide a summary')
     .argument('<url>', 'The JATS url or a DOI')
-    .argument('<output>', 'The JATS url or a DOI')
+    .argument('<output>', 'The JATS output file')
     .action(clirun(downloadAndSaveJats, { program, getSession }));
   return command;
 }
