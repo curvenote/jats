@@ -47,6 +47,12 @@ This will provide a summary, including a list of what the JATS file contains.
 
 ![Output of `jats summary`](/images/jats-output.png)
 
+`validate`: validate local file against JATS Archive DTD schema. By default, this uses JATS 1.3.
+
+```bash
+jats validate article.jats --jats 1.2 --mathmml 2
+```
+
 ## Working in Typescript
 
 All tags are accessible as types/enums. There is also documentation from each node-type
