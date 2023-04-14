@@ -1,5 +1,11 @@
 # jats-xml
 
+## 0.0.15
+
+### Patch Changes
+
+- 7a28c41: Add validation command for DTD validation
+
 ## 0.0.13
 
 ### Patch Changes
