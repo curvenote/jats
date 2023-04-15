@@ -54,7 +54,6 @@ describe('Basic JATS read', () => {
     expect(
       await validateJatsAgainstDtd(new Session(), 'tests/elifeExample.xml', {
         jats: '1.2',
-        mathml: '3',
       }),
     ).toBeTruthy();
   });
@@ -91,6 +90,7 @@ describe('Basic JATS read', () => {
       await validateJatsAgainstDtd(new Session(), 'tests/plosExample.xml', {
         jats: '1.1d3',
         mathml: '2',
+        library: 'publishing',
       }),
     ).toBeTruthy();
   });

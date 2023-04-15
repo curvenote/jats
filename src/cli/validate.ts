@@ -7,6 +7,11 @@ function makeValidateCLI(program: Command) {
   const command = new Command('validate')
     .description('Fetch JATS DTD schema file from nih.gov ftp server')
     .argument('<file>', 'JATS file to validate')
+    .addOption(
+      new Option('--library <value>', 'JATS library - archiving, publishing, or authoring').default(
+        'archiving',
+      ),
+    )
     .addOption(new Option('--jats <version>', 'JATS version, must be 1.2 or later').default('1.3'))
     .addOption(new Option('--mathml <version>', 'MathML version, 2 or 3').default('3'))
     .addOption(new Option('--oasis', 'Use OASIS table model').default(false))

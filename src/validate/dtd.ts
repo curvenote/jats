@@ -20,14 +20,18 @@ const JATS_VERSIONS = [
   '1.3d2',
 ];
 const DEFAULT_JATS_VERSION = '1.3';
+
 const MATHML_VERSIONS = ['2', '3'];
 const DEFAULT_MATHML_VERSION = '3';
+
+const JATS_LIBRARIES = ['authoring', 'publishing', 'archiving'];
+const DEFAULT_JATS_LIBRARY = 'archiving';
 
 type Options = {
   jats: string;
   mathml: '2' | '3';
   oasis: boolean;
-  // library: 'Archiving';
+  library: string;
   directory: string;
 };
 
@@ -52,7 +56,24 @@ function validateOptions(opts: any) {
   } else {
     mathml = opts.mathml;
   }
+  let library: string;
+  if (!opts.library) {
+    library = DEFAULT_JATS_LIBRARY;
+  } else if (
+    typeof opts.library !== 'string' ||
+    !JATS_LIBRARIES.includes(opts.library.toLowerCase())
+  ) {
+    throw new Error(
+      `Invalid JATS library "${opts.library}" - must be one of [${JATS_LIBRARIES.join(', ')}]`,
+    );
+  } else {
+    library = opts.library.toLowerCase();
+  }
+  if (library === 'authoring' && opts.oasis) {
+    throw new Error('JATS article authoring library cannot use OASIS table model');
+  }
   const out: Options = {
+    library,
     jats,
     mathml,
     oasis: !!opts.oasis,
@@ -65,7 +86,8 @@ function dtdFolder(opts: Options) {
   const version = opts.jats.replace('.', '-');
   const oasis = opts.oasis ? '-OASIS' : '';
   const mathml = `MathML${opts.mathml}`;
-  return `JATS-Archiving-${version}${oasis}-${mathml}-DTD`;
+  const library = opts.library.charAt(0).toUpperCase() + opts.library.slice(1);
+  return `JATS-${library}-${version}${oasis}-${mathml}-DTD`;
 }
 
 function dtdZipFile(opts: Options) {
@@ -78,7 +100,14 @@ function localDtdZipFile(opts: Options) {
 
 function dtdFile(opts: Options) {
   const version = opts.jats.startsWith('1.3') ? opts.jats.replace('.', '-') : '1';
-  const article = opts.oasis ? 'archive-oasis-article' : 'archivearticle';
+  let article: string;
+  if (opts.library === 'archiving') {
+    article = opts.oasis ? 'archive-oasis-article' : 'archivearticle';
+  } else if (opts.library === 'publishing') {
+    article = opts.oasis ? 'journalpublishing-oasis-article' : 'journalpublishing';
+  } else {
+    article = 'articleauthoring';
+  }
   const mathml = opts.mathml === '3' ? '-mathml3' : '';
   return `JATS-${article}${version}${mathml}.dtd`;
 }
@@ -88,7 +117,8 @@ function localDtdFile(opts: Options) {
 }
 
 function ftpUrl(opts: Options) {
-  return `https://ftp.ncbi.nih.gov/pub/jats/archiving/${opts.jats}/${dtdZipFile(opts)}`;
+  const library = opts.library === 'authoring' ? 'articleauthoring' : opts.library;
+  return `https://ftp.ncbi.nih.gov/pub/jats/${library}/${opts.jats}/${dtdZipFile(opts)}`;
 }
 
 function defaultDirectory() {
