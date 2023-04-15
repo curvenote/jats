@@ -34,3 +34,5 @@ yarn-error.log*
 _build
 
 src/version.ts
+
+static/

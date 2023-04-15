@@ -7,7 +7,18 @@ import type { ISession } from '../types';
 import { makeExecutable, writeFileToFolder } from 'myst-cli-utils';
 import chalk from 'chalk';
 
-const JATS_VERSIONS = ['1.2', '1.2d1', '1.2d2', '1.3', '1.3d1', '1.3d2'];
+const JATS_VERSIONS = [
+  '1.1',
+  '1.1d1',
+  '1.1d2',
+  '1.1d3',
+  '1.2',
+  '1.2d1',
+  '1.2d2',
+  '1.3',
+  '1.3d1',
+  '1.3d2',
+];
 const DEFAULT_JATS_VERSION = '1.3';
 const MATHML_VERSIONS = ['2', '3'];
 const DEFAULT_MATHML_VERSION = '3';
@@ -66,7 +77,7 @@ function localDtdZipFile(opts: Options) {
 }
 
 function dtdFile(opts: Options) {
-  const version = opts.jats.startsWith('1.2') ? '1' : opts.jats.replace('.', '-');
+  const version = opts.jats.startsWith('1.3') ? opts.jats.replace('.', '-') : '1';
   const article = opts.oasis ? 'archive-oasis-article' : 'archivearticle';
   const mathml = opts.mathml === '3' ? '-mathml3' : '';
   return `JATS-${article}${version}${mathml}.dtd`;
@@ -116,7 +127,11 @@ function isXmllintAvailable() {
   return which('xmllint', { nothrow: true });
 }
 
-export async function validateJatsAgainstDtd(session: ISession, file: string, opts?: Options) {
+export async function validateJatsAgainstDtd(
+  session: ISession,
+  file: string,
+  opts?: Partial<Options>,
+) {
   if (!isXmllintAvailable()) {
     session.log.error(
       `JATS validation against DTD requires xmllint\n\n${chalk.dim(
@@ -128,10 +143,10 @@ export async function validateJatsAgainstDtd(session: ISession, file: string, op
   const validatedOpts = validateOptions(opts ?? {});
   await ensureDtdExists(session, validatedOpts);
   try {
-    await makeExecutable(
-      `xmllint --dtdvalid ${localDtdFile(validatedOpts)} --noout ${file}`,
-      session.log,
-    )();
+    // First drop DOCTYPE with DTD in it - we have already fetched the DTD
+    const dropDtdCommand = `xmllint --dropdtd`;
+    const validateCommand = `xmllint --noout --dtdvalid ${localDtdFile(validatedOpts)}`;
+    await makeExecutable(`${dropDtdCommand} ${file} | ${validateCommand} -`, session.log)();
   } catch {
     return false;
   }
@@ -141,7 +156,7 @@ export async function validateJatsAgainstDtd(session: ISession, file: string, op
 export async function validateJatsAgainstDtdWrapper(
   session: ISession,
   file: string,
-  opts?: Options,
+  opts?: Partial<Options>,
 ) {
   const success = await validateJatsAgainstDtd(session, file, opts);
   if (success) {
