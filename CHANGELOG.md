@@ -1,5 +1,13 @@
 # jats-xml
 
+## 0.0.16
+
+### Patch Changes
+
+- f066817: Support JATS authoring and publishing libraries, in addition to archiving
+- f066817: Support JATS versions down to 1.1
+- a85bab7: Infer JATS version from file content
+
 ## 0.0.15
 
 ### Patch Changes

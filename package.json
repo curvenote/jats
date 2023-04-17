@@ -1,6 +1,6 @@
 {
   "name": "jats-xml",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Types and utilities for working with JATS in Typescript",
   "author": "Rowan Cockett <rowan@curvenote.com>",
   "homepage": "https://github.com/curvenote/jats-xml",
