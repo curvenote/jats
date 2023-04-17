@@ -2,14 +2,15 @@ import fs from 'fs';
 import { Session } from 'myst-cli-utils';
 import { toText } from 'myst-common';
 import { select } from 'unist-util-select';
-import { Jats, validateJatsAgainstDtd } from '../src';
+import { inferOptions, Jats, validateJatsAgainstDtd } from '../src';
 import { Tags } from '../src/types';
 import { authorAndAffiliation, formatDate, toDate } from '../src/utils';
 
 describe('Basic JATS read', () => {
   test('read elife JATS', async () => {
     // https://elifesciences.org/articles/80919.xml
-    const data = fs.readFileSync('tests/elifeExample.xml').toString();
+    const file = 'tests/elifeExample.xml';
+    const data = fs.readFileSync(file).toString();
     const jats = new Jats(data);
     expect(jats.doi).toEqual('10.7554/eLife.80919');
     expect(formatDate(toDate(jats.publicationDate))).toEqual('September 26, 2022');
@@ -51,17 +52,20 @@ describe('Basic JATS read', () => {
       "Children's Medical Center Research Institute, University of Texas Southwestern Medical Center",
     );
     expect(jats.license?.['xlink:href']).toBe('http://creativecommons.org/licenses/by/4.0/');
-    expect(
-      await validateJatsAgainstDtd(new Session(), 'tests/elifeExample.xml', {
-        jats: '1.2',
-      }),
-    ).toBeTruthy();
+    expect(inferOptions(file)).toEqual({
+      jats: '1.2',
+      library: 'archiving',
+      mathml: '3',
+      oasis: false,
+    });
+    expect(await validateJatsAgainstDtd(new Session(), file)).toBeTruthy();
   });
   test('read plos JATS', async () => {
     // https://journals.plos.org/climate/article?id=10.1371/journal.pclm.0000068&type=manuscript
     // The XML is here:
     // https://journals.plos.org/climate/article/file?id=10.1371/journal.pclm.0000068&type=manuscript
-    const data = fs.readFileSync('tests/plosExample.xml').toString();
+    const file = 'tests/plosExample.xml';
+    const data = fs.readFileSync(file).toString();
     const jats = new Jats(data);
     expect(jats.doi).toEqual('10.1371/journal.pclm.0000068');
     expect(formatDate(toDate(jats.publicationDate))).toEqual('September 6, 2022');
@@ -86,12 +90,12 @@ describe('Basic JATS read', () => {
     expect(jats.articleAuthors.length).toBe(3);
     expect(toText(select(Tags.surname, jats.articleAuthors[0]))).toBe('Argles');
     expect(toText(select(Tags.surname, jats.articleAuthors[2]))).toBe('Cox');
-    expect(
-      await validateJatsAgainstDtd(new Session(), 'tests/plosExample.xml', {
-        jats: '1.1d3',
-        mathml: '2',
-        library: 'publishing',
-      }),
-    ).toBeTruthy();
+    expect(inferOptions(file)).toEqual({
+      jats: '1.1d3',
+      library: 'publishing',
+      mathml: '2',
+      oasis: false,
+    });
+    expect(await validateJatsAgainstDtd(new Session(), file)).toBeTruthy();
   });
 });
