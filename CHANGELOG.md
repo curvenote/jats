@@ -1,5 +1,13 @@
 # jats-xml
 
+## 0.0.17
+
+### Patch Changes
+
+- Add the testing CLI to JATS:
+
+`jats test article.xml --cases tests.yml`
+
 ## 0.0.16
 
 ### Patch Changes
