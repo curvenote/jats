@@ -21,6 +21,27 @@ jobs:
       - run: npm install
       - run: npm run lint:format
       - run: npm run lint
+  jats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+          submodules: recursive
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y libxml2-utils
+      - run: npm install
+      - run: npm run build
+      - run: npm run link
+      # Examples of using the CLI
+      - run: jats validate tests/elifeExample.xml
+      - run: jats test tests/elifeExample.xml --cases tests/elife.yml
+      - run: jats validate tests/plosExample.xml
+      - run: jats test tests/plosExample.xml --cases tests/plos.yml
   test:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -33,7 +54,6 @@ jobs:
         with:
           fetch-depth: 2
           submodules: recursive
-      - run: sudo apt-get install -y libxml2-utils
       - name: Setup Node.js environment
         uses: actions/setup-node@v2
         with:

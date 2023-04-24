@@ -1,8 +1,7 @@
 import fs from 'fs';
-import { Session } from 'myst-cli-utils';
 import { toText } from 'myst-common';
 import { select } from 'unist-util-select';
-import { inferOptions, Jats, validateJatsAgainstDtd } from '../src';
+import { inferOptions, Jats } from '../src';
 import { Tags } from '../src/types';
 import { authorAndAffiliation, formatDate, toDate } from '../src/utils';
 
@@ -58,7 +57,6 @@ describe('Basic JATS read', () => {
       mathml: '3',
       oasis: false,
     });
-    expect(await validateJatsAgainstDtd(new Session(), file)).toBeTruthy();
   });
   test('read plos JATS', async () => {
     // https://journals.plos.org/climate/article?id=10.1371/journal.pclm.0000068&type=manuscript
@@ -96,6 +94,5 @@ describe('Basic JATS read', () => {
       mathml: '2',
       oasis: false,
     });
-    expect(await validateJatsAgainstDtd(new Session(), file)).toBeTruthy();
   });
 });
