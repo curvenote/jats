@@ -50,7 +50,9 @@
   },
   "dependencies": {
     "fair-principles": "^1.0.3",
+    "js-yaml": "^4.1.0",
     "node-fetch": "^2.6.7",
+    "unist-util-is": "^5.2.1",
     "unist-util-remove": "^3.1.0",
     "unist-util-select": "^4.0.0",
     "unzipper": "^0.10.11",
@@ -64,6 +66,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.26.0",
     "@types/jest": "^28.1.6",
+    "@types/js-yaml": "^4.0.5",
     "@types/node-fetch": "^2.6.2",
     "@types/unzipper": "^0.10.5",
     "@types/which": "^2.0.1",

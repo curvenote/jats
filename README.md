@@ -53,6 +53,28 @@ This will provide a summary, including a list of what the JATS file contains.
 jats validate article.jats --jats 1.2 --mathmml 2
 ```
 
+`test`: test a JATS file against a list of unit tests in YAML
+
+The test cases are useful for known exports and expecting specific pieces of information in the XML.
+
+```bash
+jats test article.jats --cases tests.yml
+```
+
+```yaml
+cases:
+  - title: Correct publisher ID (publisher-id)
+    select: 'front > journal-meta > journal-id[journal-id-type="publisher-id"] > *'
+    equals:
+      type: text
+      value: plos
+  - title: Every orcid is authenticated
+    selectAll: 'front > article-meta > contrib-group > contrib > contrib-id'
+    equals:
+      contrib-id-type: orcid
+      authenticated: 'true'
+```
+
 ## Working in Typescript
 
 All tags are accessible as types/enums. There is also documentation from each node-type

@@ -13,12 +13,20 @@ export function convertToUnist(node: Element): GenericNode | GenericParent | und
       const { name, attributes, elements } = node;
       const children = elements?.map(convertToUnist).filter((n): n is GenericNode => !!n);
       const next: GenericNode = { type: name ?? 'unknown', ...attributes };
-      if (children) next.children = children;
+      if (name === 'code') {
+        next.value = elements?.[0].text as string;
+      } else if (children) next.children = children;
       return next;
     }
     case 'text': {
       const { attributes, text } = node;
-      return { type: 'text', ...attributes, value: String(text) };
+      return {
+        type: 'text',
+        ...attributes,
+        value: String(text)
+          .replace(/\n(\s+)$/, '')
+          .replace('\n', ' '),
+      };
     }
     case 'cdata': {
       const { attributes, cdata } = node;

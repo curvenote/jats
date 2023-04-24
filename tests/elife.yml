@@ -1,0 +1,16 @@
+cases:
+  - title: Correct publisher ID (nlm-ta)
+    select: 'front > journal-meta > journal-id[journal-id-type="nlm-ta"] > *'
+    equals:
+      type: text
+      value: elife
+  - title: Correct publisher ID (publisher-id)
+    select: 'front > journal-meta > journal-id[journal-id-type="publisher-id"] > *'
+    equals:
+      type: text
+      value: eLife
+  - title: Every author has an orcid
+    selectAll: 'front > article-meta > contrib-group > contrib > contrib-id'
+    equals:
+      contrib-id-type: orcid
+      authenticated: 'true'

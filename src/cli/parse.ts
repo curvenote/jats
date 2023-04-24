@@ -60,7 +60,7 @@ function logAboutJatsFailing(session: ISession, jatsUrls: string[]) {
   session.log.info(`\n${chalk.blue('The link may work in a browser.')}\n`);
 }
 
-async function parseJats(
+export async function parseJats(
   session: ISession,
   file: string,
   opts: Options = { resolvers: DEFAULT_RESOLVERS },
