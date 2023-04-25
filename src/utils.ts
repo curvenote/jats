@@ -30,7 +30,11 @@ export function convertToUnist(node: Element): GenericNode | GenericParent | und
     }
     case 'cdata': {
       const { attributes, cdata } = node;
-      return { type: 'cdata', ...attributes, cdata };
+      return {
+        type: 'cdata',
+        ...attributes,
+        cdata: String(cdata).trim(),
+      };
     }
     case 'comment': {
       const { comment } = node;
