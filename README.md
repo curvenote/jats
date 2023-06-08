@@ -23,86 +23,9 @@ The standard documents are hosted by the NIH <https://jats.nlm.nih.gov/>. There 
 
 Note that most publishers do **not** provide the XML as a first class output - they should, it is an important part of open-science to have the content programatically accessible and interoperable. It is only [FAIR](https://www.go-fair.org/fair-principles/) 😉.
 
-## From the command line
+## Packages
 
-Commands available:
+See packages folder:
 
-`download`: attempt to find the JATS file and download it locally.
-
-```bash
-jats download https://elifesciences.org/articles/81952 article.jats
-```
-
-Note, currently this just downloads the XML, **not** the associated files.
-
-`summary`: summarize the contents of the JATS, given a URL, DOI, or local file
-
-```bash
-jats summary https://elifesciences.org/articles/81952
-jats summary 10.1371/journal.pclm.0000068
-jats summary /local/article.jats
-```
-
-This will provide a summary, including a list of what the JATS file contains.
-
-![Output of `jats summary`](/images/jats-output.png)
-
-`validate`: validate local file against JATS Archive DTD schema. By default, this uses JATS 1.3.
-
-```bash
-jats validate article.jats --jats 1.2 --mathmml 2
-```
-
-`test`: test a JATS file against a list of unit tests in YAML
-
-The test cases are useful for known exports and expecting specific pieces of information in the XML.
-
-```bash
-jats test article.jats --cases tests.yml
-```
-
-```yaml
-cases:
-  - title: Correct publisher ID (publisher-id)
-    select: 'front > journal-meta > journal-id[journal-id-type="publisher-id"] > *'
-    equals:
-      type: text
-      value: plos
-  - title: Every orcid is authenticated
-    selectAll: 'front > article-meta > contrib-group > contrib > contrib-id'
-    equals:
-      contrib-id-type: orcid
-      authenticated: 'true'
-```
-
-## Working in Typescript
-
-All tags are accessible as types/enums. There is also documentation from each node-type
-
-```typescript
-import { Tags } from 'jats-xml';
-
-Tags.journalId;
-```
-
-## Reading JATS in Node
-
-```typescript
-import 'fs' from 'fs';
-import { Inventory, toDate } from 'jats-xml';
-import { toText } from 'myst-common';
-import { select, selectAll } from 'unist-util-select';
-
-const data = fs.readFileSync('article.jats').toString();
-const jats = new JATS(data);
-// Easy access to properties
-jats.doi
-jats.body // A tree of the body (or front/back)
-toDate(jats.publicationDate) // as a Javascript Date object
-select('[id=fig1]', jats.body) // select a figure by an ID
-selectAll('fig', jats.body) // Or selectAll figures
-```
-
-## Write JATS in Node
-
-TODO!
+- jats-xml
+- jats-tags

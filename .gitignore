@@ -33,6 +33,6 @@ yarn-error.log*
 
 _build
 
-src/version.ts
+packages/jats-xml/src/version.ts
 
 static/
