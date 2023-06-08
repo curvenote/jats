@@ -6,7 +6,7 @@ import type { Element, DeclarationAttributes } from 'xml-js';
 import type { PageFrontmatter } from 'myst-frontmatter';
 import { authorAndAffiliation, convertToUnist, findArticleId, toDate } from './utils';
 import { select as unistSelect, selectAll } from 'unist-util-select';
-import { Tags } from './types';
+import { Tags } from 'jats-tags';
 import type {
   Front,
   Body,
@@ -26,7 +26,7 @@ import type {
   KeywordGroup,
   Keyword,
   ArticleCategories,
-} from './types';
+} from 'jats-tags';
 import type { Logger } from 'myst-cli-utils';
 import { tic } from 'myst-cli-utils';
 

@@ -38,10 +38,10 @@ jobs:
       - run: npm run build
       - run: npm run link
       # Examples of using the CLI
-      - run: jats validate tests/elifeExample.xml
-      - run: jats test tests/elifeExample.xml --cases tests/elife.yml
-      - run: jats validate tests/plosExample.xml
-      - run: jats test tests/plosExample.xml --cases tests/plos.yml
+      - run: jats validate packages/jats-xml/tests/elifeExample.xml
+      - run: jats test packages/jats-xml/tests/elifeExample.xml --cases packages/jats-xml/tests/elife.yml
+      - run: jats validate packages/jats-xml/tests/plosExample.xml
+      - run: jats test packages/jats-xml/tests/plosExample.xml --cases packages/jats-xml/tests/plos.yml
   test:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
