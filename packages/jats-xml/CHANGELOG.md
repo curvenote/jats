@@ -1,5 +1,17 @@
 # jats-xml
 
+## 0.1.0
+
+### Minor Changes
+
+- 8846ec9: Move to using jats-tags for types
+
+### Patch Changes
+
+- e5520ee: Trim CDATA strings, based on pandoc output
+- Updated dependencies [8846ec9]
+  - jats-tags@0.1.0
+
 ## 0.0.17
 
 ### Patch Changes
