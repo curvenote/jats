@@ -7,7 +7,7 @@ import chalk from 'chalk';
 import { formatPrinciples, highlightFAIR } from 'fair-principles';
 import { getSession } from '../session';
 import type { ISession, Options } from '../types';
-import { Tags } from '../types';
+import { Tags } from 'jats-tags';
 import { Jats } from '../jats';
 import { toText } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';

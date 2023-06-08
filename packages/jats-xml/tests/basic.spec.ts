@@ -2,7 +2,7 @@ import fs from 'fs';
 import { toText } from 'myst-common';
 import { select } from 'unist-util-select';
 import { inferOptions, Jats } from '../src';
-import { Tags } from '../src/types';
+import { Tags } from 'jats-tags';
 import { authorAndAffiliation, formatDate, toDate } from '../src/utils';
 
 describe('Basic JATS read', () => {

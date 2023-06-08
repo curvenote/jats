@@ -40,16 +40,14 @@
     "build:cjs": "tsc --module commonjs --outDir dist/cjs",
     "build:cli": "esbuild src/cli/index.ts --bundle --outfile=dist/jats.js --platform=node",
     "declarations": "tsc --declaration --emitDeclarationOnly --declarationMap --outDir dist/types",
-    "build": "npm-run-all -l clean copy:version -p build:cjs build:esm declarations build:cli",
-    "changeset": "changeset",
-    "version": "changeset version && npm install",
-    "publish": "npm run build && npm run test && changeset publish && git push --follow-tags"
+    "build": "npm-run-all -l clean copy:version -p build:cjs build:esm declarations build:cli"
   },
   "bugs": {
     "url": "https://github.com/curvenote/jats-xml/issues"
   },
   "dependencies": {
     "fair-principles": "^1.0.3",
+    "jats-tags": "^0.0.17",
     "js-yaml": "^4.1.0",
     "node-fetch": "^2.6.7",
     "unist-util-is": "^5.2.1",
