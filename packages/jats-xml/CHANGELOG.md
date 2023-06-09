@@ -1,5 +1,12 @@
 # jats-xml
 
+## 1.0.1
+
+### Patch Changes
+
+- 2da15a2: Update which sync
+  - jats-tags@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
