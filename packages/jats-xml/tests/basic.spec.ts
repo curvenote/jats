@@ -1,3 +1,4 @@
+import { describe, expect, test } from 'vitest';
 import fs from 'fs';
 import { toText } from 'myst-common';
 import { select } from 'unist-util-select';

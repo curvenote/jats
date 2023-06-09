@@ -1,12 +1,12 @@
 import type { GenericNode, GenericParent } from 'myst-common';
 import { toText } from 'myst-common';
 import { xml2js } from 'xml-js';
-import doi from 'doi-utils';
+import { doi } from 'doi-utils';
 import type { Element, DeclarationAttributes } from 'xml-js';
 import type { PageFrontmatter } from 'myst-frontmatter';
-import { authorAndAffiliation, convertToUnist, findArticleId, toDate } from './utils';
 import { select as unistSelect, selectAll } from 'unist-util-select';
 import { Tags } from 'jats-tags';
+import { authorAndAffiliation, convertToUnist, findArticleId, toDate } from './utils.js';
 import type {
   Front,
   Body,

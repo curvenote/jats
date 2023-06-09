@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-import commander from 'commander';
-import version from '../version';
-import { addDownloadCLI } from './parse';
-import { addValidateCLI } from './validate';
-import { addTestCLI } from './jats-test';
+import { Command } from 'commander';
+import version from '../version.js';
+import { addDownloadCLI } from './parse.js';
+import { addValidateCLI } from './validate.js';
+import { addTestCLI } from './jats-test.js';
 
-const program = new commander.Command();
+const program = new Command();
 
 addDownloadCLI(program);
 addValidateCLI(program);

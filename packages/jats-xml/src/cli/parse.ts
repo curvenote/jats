@@ -2,18 +2,18 @@ import { Command } from 'commander';
 import fs from 'fs';
 import { extname } from 'path';
 import { clirun, isUrl, tic, writeFileToFolder } from 'myst-cli-utils';
-import doi from 'doi-utils';
+import { doi } from 'doi-utils';
 import chalk from 'chalk';
 import { formatPrinciples, highlightFAIR } from 'fair-principles';
-import { getSession } from '../session';
-import type { ISession, Options } from '../types';
 import { Tags } from 'jats-tags';
-import { Jats } from '../jats';
 import { toText } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
-import { downloadJatsFromUrl } from './download';
-import { DEFAULT_RESOLVERS } from '../resolvers';
-import { findArticleId, formatDate, toDate } from '../utils';
+import { getSession } from '../session.js';
+import type { ISession, Options } from '../types.js';
+import { Jats } from '../jats.js';
+import { downloadJatsFromUrl } from './download.js';
+import { DEFAULT_RESOLVERS } from '../resolvers.js';
+import { findArticleId, formatDate, toDate } from '../utils.js';
 
 function hasValidExtension(output: string) {
   return ['.xml', '.jats'].includes(extname(output).toLowerCase());

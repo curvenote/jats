@@ -1,14 +1,14 @@
 import { Command, Option } from 'commander';
 import { clirun } from 'myst-cli-utils';
-import { getSession } from '../session';
-import { validateJatsAgainstDtdWrapper } from '../validate';
+import { getSession } from '../session.js';
+import { validateJatsAgainstDtdWrapper } from '../validate/index.js';
 
 function makeValidateCLI(program: Command) {
   const command = new Command('validate')
     .description(
       `
       Validate JATS file against DTD schema.
-      
+
       The JATS DTD schema file is fetched from nih.gov ftp server if not available locally.
       This will attempt to infer the specific JATS DTD version, library, etc from the file header,
       but options are available to override the inferred values.
