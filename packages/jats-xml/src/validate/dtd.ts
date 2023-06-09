@@ -2,7 +2,7 @@ import fs, { createReadStream } from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
 import unzipper from 'unzipper';
-import { sync as which } from 'which';
+import which from 'which';
 import { makeExecutable, writeFileToFolder } from 'myst-cli-utils';
 import chalk from 'chalk';
 import type { ISession } from '../types.js';
@@ -253,7 +253,7 @@ async function ensureDtdExists(session: ISession, opts: Options) {
  * Test if xmllint is available as a cli command
  */
 function isXmllintAvailable() {
-  return which('xmllint', { nothrow: true });
+  return which.sync('xmllint', { nothrow: true });
 }
 
 /**
