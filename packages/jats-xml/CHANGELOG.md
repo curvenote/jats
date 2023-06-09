@@ -1,5 +1,16 @@
 # jats-xml
 
+## 1.0.0
+
+### Major Changes
+
+- c1257c0: ESM release of jats-xml
+
+### Patch Changes
+
+- Updated dependencies [c1257c0]
+  - jats-tags@1.0.0
+
 ## 0.1.0
 
 ### Minor Changes
