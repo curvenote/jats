@@ -1,1 +1,1 @@
-export * from './dtd';
+export * from './dtd.js';

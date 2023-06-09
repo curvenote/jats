@@ -1,14 +1,14 @@
 import { Command, Option } from 'commander';
 import { clirun, tic } from 'myst-cli-utils';
-import { getSession } from '../session';
 import yaml from 'js-yaml';
 import fs from 'fs';
-import { parseJats } from './parse';
-import type { ISession } from '../types';
 import { select, selectAll } from 'unist-util-select';
 import { is } from 'unist-util-is';
 import type { GenericNode } from 'myst-common';
 import chalk from 'chalk';
+import { getSession } from '../session.js';
+import { parseJats } from './parse.js';
+import type { ISession } from '../types.js';
 
 type Options = {
   cases: string;

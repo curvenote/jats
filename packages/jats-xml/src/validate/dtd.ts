@@ -3,9 +3,9 @@ import path from 'path';
 import fetch from 'node-fetch';
 import unzipper from 'unzipper';
 import { sync as which } from 'which';
-import type { ISession } from '../types';
 import { makeExecutable, writeFileToFolder } from 'myst-cli-utils';
 import chalk from 'chalk';
+import type { ISession } from '../types.js';
 
 const JATS_VERSIONS = [
   '1.1',

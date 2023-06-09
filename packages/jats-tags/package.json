@@ -5,9 +5,10 @@
   "author": "Rowan Cockett <rowan@curvenote.com>",
   "homepage": "https://github.com/curvenote/jats-xml",
   "license": "MIT",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/types/index.d.ts",
+  "sideEffects": false,
+  "type": "module",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -25,14 +26,10 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "unlink": "npm uninstall -g jats-xml;",
-    "link": "npm run unlink; npm link;",
-    "lint": "eslint \"src/**/*.ts\" -c .eslintrc.js --max-warnings 1",
-    "lint:format": "prettier --check src/*.ts src/**/*.ts",
-    "build:esm": "tsc --module es2015   --outDir dist/esm",
-    "build:cjs": "tsc --module commonjs --outDir dist/cjs",
-    "declarations": "tsc --declaration --emitDeclarationOnly --declarationMap --outDir dist/types",
-    "build": "npm-run-all -l clean -p build:cjs build:esm declarations"
+    "lint": "eslint \"src/**/*.ts*\" -c ./.eslintrc.cjs",
+    "lint:format": "prettier --check \"src/**/*.{ts,tsx,md}\"",
+    "build:esm": "tsc --project ./tsconfig.json --module es2015 --outDir dist --declaration",
+    "build": "npm-run-all -l clean -p build:esm"
   },
   "bugs": {
     "url": "https://github.com/curvenote/jats-xml/issues"

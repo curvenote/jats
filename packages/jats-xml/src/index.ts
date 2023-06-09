@@ -1,4 +1,4 @@
-export { default as version } from './version';
-export { Jats } from './jats';
-export * from './types';
-export * from './validate';
+export { default as version } from './version.js';
+export { Jats } from './jats.js';
+export * from './types.js';
+export * from './validate/index.js';

@@ -1,7 +1,7 @@
 import type { GenericNode, GenericParent } from 'myst-common';
 import { toText } from 'myst-common';
 import type { Element } from 'xml-js';
-import doi from 'doi-utils';
+import { doi } from 'doi-utils';
 import { select, selectAll } from 'unist-util-select';
 import type { Affiliation, ArticleId, Xref } from 'jats-tags';
 import { Tags } from 'jats-tags';

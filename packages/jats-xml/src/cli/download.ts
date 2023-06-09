@@ -1,9 +1,9 @@
-import doi from 'doi-utils';
+import { doi } from 'doi-utils';
 import fetch from 'node-fetch';
 import { isUrl, tic } from 'myst-cli-utils';
 
-import type { ISession, Options } from '../types';
-import { customResolveJatsUrlFromDoi } from '../resolvers';
+import type { ISession, Options } from '../types.js';
+import { customResolveJatsUrlFromDoi } from '../resolvers.js';
 
 async function downloadFromUrl(session: ISession, jatsUrl: string, opts: Options): Promise<string> {
   const toc = tic();

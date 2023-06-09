@@ -1,6 +1,6 @@
-import doi from 'doi-utils';
+import { doi } from 'doi-utils';
 import fetch from 'node-fetch';
-import type { ISession, Options, Resolver } from './types';
+import type { ISession, Options, Resolver } from './types.js';
 
 export const elife: Resolver = {
   test(url: string) {

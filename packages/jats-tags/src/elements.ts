@@ -1,6 +1,6 @@
 import type { GenericParent } from 'myst-common';
-import type { Tags } from './elementTags';
-import type { RefType } from './refType';
+import type { Tags } from './elementTags.js';
+import type { RefType } from './refType.js';
 
 export type LinkMixin = {
   'xlink:href'?: string;
