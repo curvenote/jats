@@ -6,7 +6,7 @@
 
 Types and utilities for working with JATS XML documents in Node and Typescript.
 
-Read and write JATS XML from node or see summries from the command line.
+Read and write JATS XML from node or see summaries from the command line.
 
 To use from the command line, use the `-g` to create a global install, which will provide a `jats` CLI:
 
