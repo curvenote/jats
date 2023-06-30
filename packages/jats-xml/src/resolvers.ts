@@ -1,6 +1,6 @@
 import { doi } from 'doi-utils';
 import fetch from 'node-fetch';
-import type { ISession, Options, Resolver } from './types.js';
+import type { ISession, ResolutionOptions, Resolver } from './types.js';
 
 export const elife: Resolver = {
   test(url: string) {
@@ -41,7 +41,7 @@ export const DEFAULT_RESOLVERS: Resolver[] = [elife, plos, joss];
 export async function customResolveJatsUrlFromDoi(
   session: ISession,
   doiString: string,
-  opts: Options = { resolvers: DEFAULT_RESOLVERS },
+  opts: ResolutionOptions = { resolvers: DEFAULT_RESOLVERS },
 ): Promise<string> {
   if (!doi.validate(doiString)) throw new Error(`The doi ${doiString} is not valid`);
   const doiUrl = doi.buildUrl(doiString) as string;

@@ -7,7 +7,7 @@ export interface Resolver {
   jatsUrl: (url: string) => string;
 }
 
-export type Options = {
+export type ResolutionOptions = {
   resolvers?: Resolver[];
   fetcher?: (
     url: string,
