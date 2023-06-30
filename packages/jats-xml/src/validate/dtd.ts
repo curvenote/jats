@@ -223,7 +223,9 @@ async function dtdDownload(session: ISession, opts: Options) {
   session.log.info(`🌎 Downloading: ${ftpUrl(opts)}`);
   session.log.debug(`Saving to ${localDtdZipFile(opts)}`);
   const resp = await fetch(ftpUrl(opts));
-  writeFileToFolder(localDtdZipFile(opts), await resp.buffer());
+  const arrayBuffer = await resp.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  writeFileToFolder(localDtdZipFile(opts), buffer);
 }
 
 /**
