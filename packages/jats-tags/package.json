@@ -1,6 +1,6 @@
 {
   "name": "jats-tags",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Tags and types for working with JATS in Typescript",
   "author": "Rowan Cockett <rowan@curvenote.com>",
   "homepage": "https://github.com/curvenote/jats-xml",

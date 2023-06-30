@@ -1,5 +1,12 @@
 # jats-xml
 
+## 1.0.2
+
+### Patch Changes
+
+- a68640f: Export additional functions and types
+  - jats-tags@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes
