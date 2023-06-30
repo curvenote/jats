@@ -257,6 +257,29 @@ export function isXmllintAvailable() {
 }
 
 /**
+ * Run xmllint validation
+ */
+export async function xmllintValidate(session: ISession, file: string, dtd: string) {
+  if (!isXmllintAvailable()) {
+    session.log.error(
+      `JATS validation against DTD requires xmllint\n\n${chalk.dim(
+        'To install:\n  mac:    brew install xmlstarlet\n  debian: apt install libxml2-utils',
+      )}`,
+    );
+    return;
+  }
+  try {
+    // First drop DOCTYPE with DTD in it - we have already fetched the DTD
+    const dropDtdCommand = `xmllint --dropdtd`;
+    const validateCommand = `xmllint --noout --dtdvalid ${dtd}`;
+    await makeExecutable(`${dropDtdCommand} ${file} | ${validateCommand} -`, session.log)();
+  } catch {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Check if JATS file is valid based on JATS version/library/etc.
  *
  * Returns true if valid and false if invalid.
@@ -266,28 +289,13 @@ export async function validateJatsAgainstDtd(
   file: string,
   opts?: Partial<JatsOptions>,
 ) {
-  if (!isXmllintAvailable()) {
-    session.log.error(
-      `JATS validation against DTD requires xmllint\n\n${chalk.dim(
-        'To install:\n  mac:    brew install xmlstarlet\n  debian: apt install libxml2-utils',
-      )}`,
-    );
-    return;
-  }
   const inferredOpts = inferOptions(file);
   const validatedOpts = validateOptions(session, opts ?? {}, inferredOpts);
   await ensureDtdExists(session, validatedOpts);
   session.log.debug(`Validating against: ${localDtdFile(validatedOpts)}`);
   session.log.info(`🧐 Validating against: ${dtdFolder(validatedOpts)}`);
-  try {
-    // First drop DOCTYPE with DTD in it - we have already fetched the DTD
-    const dropDtdCommand = `xmllint --dropdtd`;
-    const validateCommand = `xmllint --noout --dtdvalid ${localDtdFile(validatedOpts)}`;
-    await makeExecutable(`${dropDtdCommand} ${file} | ${validateCommand} -`, session.log)();
-  } catch {
-    return false;
-  }
-  return true;
+  const valid = await xmllintValidate(session, file, localDtdFile(validatedOpts));
+  return valid;
 }
 
 /**
