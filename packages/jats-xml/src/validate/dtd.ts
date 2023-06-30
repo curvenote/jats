@@ -27,7 +27,7 @@ const DEFAULT_MATHML_VERSION = '3';
 const JATS_LIBRARIES = ['authoring', 'publishing', 'archiving'];
 const DEFAULT_JATS_LIBRARY = 'archiving';
 
-type Options = {
+export type JatsOptions = {
   jats: string;
   mathml: '2' | '3';
   oasis: boolean;
@@ -44,7 +44,7 @@ function defaultDirectory() {
   return path.join(__dirname, 'static');
 }
 
-function warnOnOptionsMismatch(session: ISession, opts: any, inferredOpts: Partial<Options>) {
+function warnOnOptionsMismatch(session: ISession, opts: any, inferredOpts: Partial<JatsOptions>) {
   if (opts.jats && inferredOpts.jats && opts.jats !== inferredOpts.jats) {
     session.log.warn(
       `Using JATS version ${opts.jats}; does not match version inferred from file ${inferredOpts.jats}`,
@@ -67,7 +67,7 @@ function warnOnOptionsMismatch(session: ISession, opts: any, inferredOpts: Parti
 /**
  * Validate input value as JATS options and fill in defaults
  */
-function validateOptions(session: ISession, opts: any, inferredOpts: Partial<Options>) {
+function validateOptions(session: ISession, opts: any, inferredOpts: Partial<JatsOptions>) {
   warnOnOptionsMismatch(session, opts, inferredOpts);
   let jats: string;
   if (!opts.jats) {
@@ -106,7 +106,7 @@ function validateOptions(session: ISession, opts: any, inferredOpts: Partial<Opt
   if (library === 'authoring' && oasis) {
     throw new Error('JATS article authoring library cannot use OASIS table model');
   }
-  const out: Options = {
+  const out: JatsOptions = {
     library,
     jats,
     mathml,
@@ -119,7 +119,7 @@ function validateOptions(session: ISession, opts: any, inferredOpts: Partial<Opt
 /**
  * DTD folder name
  */
-function dtdFolder(opts: Options) {
+function dtdFolder(opts: JatsOptions) {
   const version = opts.jats.replace('.', '-');
   const oasis = opts.oasis ? '-OASIS' : '';
   const mathml = `MathML${opts.mathml}`;
@@ -130,21 +130,21 @@ function dtdFolder(opts: Options) {
 /**
  * DTD zip file name on FTP server
  */
-function dtdZipFile(opts: Options) {
+function dtdZipFile(opts: JatsOptions) {
   return `${dtdFolder(opts)}.zip`;
 }
 
 /**
  * Local location of DTD zip file
  */
-function localDtdZipFile(opts: Options) {
+function localDtdZipFile(opts: JatsOptions) {
   return path.join(opts.directory, dtdZipFile(opts));
 }
 
 /**
  * Extracted DTD file name
  */
-function dtdFile(opts: Omit<Options, 'directory'>) {
+function dtdFile(opts: Omit<JatsOptions, 'directory'>) {
   const version = opts.jats.startsWith('1.3') ? opts.jats.replace('.', '-') : '1';
   let article: string;
   if (opts.library === 'archiving') {
@@ -161,7 +161,7 @@ function dtdFile(opts: Omit<Options, 'directory'>) {
 /**
  * Local location of extracted DTD file
  */
-function localDtdFile(opts: Options) {
+function localDtdFile(opts: JatsOptions) {
   return path.join(opts.directory, dtdFolder(opts), dtdFile(opts));
 }
 
@@ -170,7 +170,7 @@ function localDtdFile(opts: Options) {
  *
  * This is accessed by node-fetch over https.
  */
-function ftpUrl(opts: Options) {
+function ftpUrl(opts: JatsOptions) {
   const library = opts.library === 'authoring' ? 'articleauthoring' : opts.library;
   return `https://ftp.ncbi.nih.gov/pub/jats/${library}/${opts.jats}/${dtdZipFile(opts)}`;
 }
@@ -179,12 +179,12 @@ function ftpUrl(opts: Options) {
  * Create a DTS-filename-options lookup for implicitly setting options based on JATS header content
  */
 function buildDtdFileLookup() {
-  const lookup: Record<string, Omit<Options, 'directory'>> = {};
+  const lookup: Record<string, Omit<JatsOptions, 'directory'>> = {};
   JATS_VERSIONS.filter((jats) => jats === '1.2' || jats.startsWith('1.3')).forEach((jats) => {
     MATHML_VERSIONS.forEach((mathml) => {
       JATS_LIBRARIES.forEach((library) => {
         (library === 'authoring' ? [false] : [true, false]).forEach((oasis) => {
-          const opts: Omit<Options, 'directory'> = { jats, mathml, library, oasis };
+          const opts: Omit<JatsOptions, 'directory'> = { jats, mathml, library, oasis };
           lookup[dtdFile(opts)] = opts;
         });
       });
@@ -202,7 +202,7 @@ export function inferOptions(file: string) {
   const data = fs.readFileSync(file).toString();
   const doctype = data.match(/<!DOCTYPE [\s\S]+?">/g)?.[0];
   const lookup = buildDtdFileLookup();
-  let opts: Partial<Options> = {};
+  let opts: Partial<JatsOptions> = {};
   Object.entries(lookup).forEach(([key, value]) => {
     if (doctype?.includes(key)) opts = { ...value };
   });
@@ -216,7 +216,7 @@ export function inferOptions(file: string) {
 /**
  * Download DTD zip file from NIH FTP server
  */
-async function dtdDownload(session: ISession, opts: Options) {
+async function dtdDownload(session: ISession, opts: JatsOptions) {
   if (!fs.existsSync(opts.directory)) {
     fs.mkdirSync(opts.directory, { recursive: true });
   }
@@ -229,7 +229,7 @@ async function dtdDownload(session: ISession, opts: Options) {
 /**
  * Download DTD zip file from NIH FTP server if it does not yet exist
  */
-async function ensureDtdZipExists(session: ISession, opts: Options) {
+async function ensureDtdZipExists(session: ISession, opts: JatsOptions) {
   if (!fs.existsSync(path.join(opts.directory, dtdZipFile(opts)))) {
     await dtdDownload(session, opts);
   }
@@ -238,7 +238,7 @@ async function ensureDtdZipExists(session: ISession, opts: Options) {
 /**
  * Download and extract DTD file if it does not yet exist
  */
-async function ensureDtdExists(session: ISession, opts: Options) {
+async function ensureDtdExists(session: ISession, opts: JatsOptions) {
   if (!fs.existsSync(localDtdFile(opts))) {
     await ensureDtdZipExists(session, opts);
     const zipFile = localDtdZipFile(opts);
@@ -252,7 +252,7 @@ async function ensureDtdExists(session: ISession, opts: Options) {
 /**
  * Test if xmllint is available as a cli command
  */
-function isXmllintAvailable() {
+export function isXmllintAvailable() {
   return which.sync('xmllint', { nothrow: true });
 }
 
@@ -264,7 +264,7 @@ function isXmllintAvailable() {
 export async function validateJatsAgainstDtd(
   session: ISession,
   file: string,
-  opts?: Partial<Options>,
+  opts?: Partial<JatsOptions>,
 ) {
   if (!isXmllintAvailable()) {
     session.log.error(
@@ -298,7 +298,7 @@ export async function validateJatsAgainstDtd(
 export async function validateJatsAgainstDtdWrapper(
   session: ISession,
   file: string,
-  opts?: Partial<Options>,
+  opts?: Partial<JatsOptions>,
 ) {
   const success = await validateJatsAgainstDtd(session, file, opts);
   if (success) {

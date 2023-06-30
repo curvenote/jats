@@ -2,10 +2,14 @@ import { doi } from 'doi-utils';
 import fetch from 'node-fetch';
 import { isUrl, tic } from 'myst-cli-utils';
 
-import type { ISession, Options } from '../types.js';
+import type { ISession, ResolutionOptions } from '../types.js';
 import { customResolveJatsUrlFromDoi } from '../resolvers.js';
 
-async function downloadFromUrl(session: ISession, jatsUrl: string, opts: Options): Promise<string> {
+async function downloadFromUrl(
+  session: ISession,
+  jatsUrl: string,
+  opts: ResolutionOptions,
+): Promise<string> {
   const toc = tic();
   session.log.debug(`Fetching JATS from ${jatsUrl}`);
   const resp = await (opts?.fetcher ?? defaultFetcher)(jatsUrl, 'xml');
@@ -58,7 +62,7 @@ function defaultFetcher(url: string, kind?: 'json' | 'xml') {
 async function checkIfDoiHasJats(
   session: ISession,
   urlOrDoi: string,
-  opts: Options,
+  opts: ResolutionOptions,
 ): Promise<string | undefined> {
   if (!doi.validate(urlOrDoi)) return;
   const toc = tic();
@@ -103,7 +107,7 @@ type OpenAlexWork = {
 export async function convertPMID2PMCID(
   session: ISession,
   PMID: string,
-  opts: Options,
+  opts: ResolutionOptions,
 ): Promise<string | undefined> {
   if (PMID.startsWith('https://')) {
     const idPart = new URL(PMID).pathname.slice(1);
@@ -135,7 +139,7 @@ function pubMedCentralJats(PMCID: string) {
 export async function checkIfPubMedCentralHasJats(
   session: ISession,
   urlOrDoi: string,
-  opts: Options,
+  opts: ResolutionOptions,
 ): Promise<string | undefined> {
   if (urlOrDoi.match(/^PMC:?([0-9]+)$/)) return pubMedCentralJats(urlOrDoi);
   if (!doi.validate(urlOrDoi)) return;
@@ -173,7 +177,7 @@ export async function checkIfPubMedCentralHasJats(
 export async function downloadJatsFromUrl(
   session: ISession,
   urlOrDoi: string,
-  opts: Options = {},
+  opts: ResolutionOptions = {},
 ): Promise<{ success: boolean; source: string; data?: string }> {
   const expectedUrls = (
     await Promise.all([

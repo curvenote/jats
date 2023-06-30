@@ -9,7 +9,7 @@ import { Tags } from 'jats-tags';
 import { toText } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { getSession } from '../session.js';
-import type { ISession, Options } from '../types.js';
+import type { ISession, ResolutionOptions } from '../types.js';
 import { Jats } from '../jats.js';
 import { downloadJatsFromUrl } from './download.js';
 import { DEFAULT_RESOLVERS } from '../resolvers.js';
@@ -23,7 +23,7 @@ async function downloadAndSaveJats(
   session: ISession,
   urlOrDoi: string,
   output: string,
-  opts: Options = { resolvers: DEFAULT_RESOLVERS },
+  opts: ResolutionOptions = { resolvers: DEFAULT_RESOLVERS },
 ): Promise<string> {
   if (fs.existsSync(urlOrDoi)) {
     throw new Error(`File "${urlOrDoi}" is local and cannot be downloaded!`);
@@ -63,7 +63,7 @@ function logAboutJatsFailing(session: ISession, jatsUrls: string[]) {
 export async function parseJats(
   session: ISession,
   file: string,
-  opts: Options = { resolvers: DEFAULT_RESOLVERS },
+  opts: ResolutionOptions = { resolvers: DEFAULT_RESOLVERS },
 ): Promise<Jats> {
   const toc = tic();
   if (fs.existsSync(file)) {
