@@ -35,4 +35,4 @@ _build
 
 version.ts
 
-static/
+packages/jats-xml/**/static/
