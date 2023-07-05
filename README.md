@@ -29,6 +29,7 @@ See packages folder:
 
 - jats-xml
 - jats-tags
+- meca
 
 ---
 
