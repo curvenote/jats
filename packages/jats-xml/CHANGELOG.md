@@ -1,5 +1,13 @@
 # jats-xml
 
+## 1.0.3
+
+### Patch Changes
+
+- e3a9d1c: Update buffer for download
+- 40f42d1: Suppress failure to load external entity warning
+  - jats-tags@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes
