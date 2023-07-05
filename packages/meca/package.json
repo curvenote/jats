@@ -1,0 +1,63 @@
+{
+  "name": "meca",
+  "version": "0.0.2",
+  "description": "Types and utilities for working with MECA",
+  "author": "Rowan Cockett <rowan@curvenote.com>",
+  "homepage": "https://github.com/curvenote/meca",
+  "license": "MIT",
+  "sideEffects": false,
+  "type": "module",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "jats",
+    "open-science",
+    "publishing"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/curvenote/meca.git"
+  },
+  "bin": "./dist/meca.cjs",
+  "scripts": {
+    "copy:dtd": "cp ./static/MECA_manifest.dtd dist/MECA_manifest.dtd",
+    "copy:version": "echo \"const version = '\"$npm_package_version\"';\nexport default version;\" > src/version.ts",
+    "clean": "rm -rf dist",
+    "unlink": "npm uninstall -g meca;",
+    "link": "npm run unlink; npm link;",
+    "dev": "npm run copy:version && npm run link && esbuild src/cli/index.ts --bundle --outfile=dist/meca.cjs --platform=node --watch && npm run copy:dtd",
+    "test": "npm run copy:version && vitest run",
+    "test:watch": "npm run copy:version && vitest watch",
+    "lint": "eslint \"src/**/*.ts*\" -c ./.eslintrc.cjs",
+    "lint:format": "prettier --check \"src/**/*.{ts,tsx,md}\"",
+    "build:esm": "tsc --project ./tsconfig.json --module es2015 --outDir dist --declaration",
+    "build:cli": "esbuild src/cli/index.ts --bundle --outfile=dist/meca.cjs --platform=node",
+    "build": "npm-run-all -l clean copy:version -p build:esm build:cli -s copy:dtd"
+  },
+  "bugs": {
+    "url": "https://github.com/curvenote/meca/issues"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "jats-xml": "^1.0.2",
+    "xml-js": "^1.6.11"
+  },
+  "peerDependencies": {
+    "chalk": "^5.2.0",
+    "commander": "^10.0.1"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.0",
+    "chalk": "^5.2.0",
+    "commander": "^10.0.1",
+    "myst-cli-utils": "^1.0.0",
+    "myst-common": "^1.0.0",
+    "myst-frontmatter": "^1.0.0"
+  }
+}

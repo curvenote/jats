@@ -10,38 +10,40 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 2
           submodules: recursive
-      - name: Use Node.js 16.x
-        uses: actions/setup-node@v1
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 18.x
       - run: npm install
       - run: npm run lint:format
       - run: npm run lint
-  jats:
+  cli:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 2
           submodules: recursive
-      - name: Use Node.js 16.x
-        uses: actions/setup-node@v1
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 18.x
       - run: sudo apt-get update
       - run: sudo apt-get install -y libxml2-utils
       - run: npm install
       - run: npm run build
       - run: npm run link
-      # Examples of using the CLI
+      # Examples of using the jats CLI
       - run: jats validate packages/jats-xml/tests/elifeExample.xml
       - run: jats test packages/jats-xml/tests/elifeExample.xml --cases packages/jats-xml/tests/elife.yml
       - run: jats validate packages/jats-xml/tests/plosExample.xml
       - run: jats test packages/jats-xml/tests/plosExample.xml --cases packages/jats-xml/tests/plos.yml
+      # Examples of using the meca CLI
+      - run: meca validate packages/meca/tests/example.zip
   test:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -50,12 +52,12 @@ jobs:
         node: ['16', '18']
     name: Testing on node ${{ matrix.node }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 2
           submodules: recursive
       - name: Setup Node.js environment
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
           cache: 'npm'
