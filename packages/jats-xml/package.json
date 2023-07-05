@@ -45,6 +45,7 @@
     "url": "https://github.com/curvenote/jats-xml/issues"
   },
   "dependencies": {
+    "adm-zip": "^0.5.10",
     "doi-utils": "^2.0.0",
     "fair-principles": "^2.0.0",
     "jats-tags": "^1.0.2",
@@ -53,7 +54,6 @@
     "unist-util-is": "^5.2.1",
     "unist-util-remove": "^3.1.0",
     "unist-util-select": "^4.0.0",
-    "unzipper": "^0.10.14",
     "which": "^3.0.1",
     "xml-js": "^1.6.11"
   },
@@ -62,8 +62,8 @@
     "commander": "^10.0.1"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.0",
     "@types/js-yaml": "^4.0.5",
-    "@types/unzipper": "^0.10.6",
     "@types/which": "^3.0.0",
     "chalk": "^5.2.0",
     "commander": "^10.0.1",

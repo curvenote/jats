@@ -1,7 +1,7 @@
-import fs, { createReadStream } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
-import unzipper from 'unzipper';
+import AdmZip from 'adm-zip';
 import which from 'which';
 import { makeExecutable, writeFileToFolder } from 'myst-cli-utils';
 import chalk from 'chalk';
@@ -245,9 +245,8 @@ async function ensureDtdExists(session: ISession, opts: JatsOptions) {
     await ensureDtdZipExists(session, opts);
     const zipFile = localDtdZipFile(opts);
     session.log.info(`🤐 Unzipping template: ${zipFile}`);
-    await createReadStream(zipFile)
-      .pipe(unzipper.Extract({ path: opts.directory }))
-      .promise();
+    const zip = new AdmZip(zipFile);
+    zip.extractAllTo(opts.directory);
   }
 }
 
