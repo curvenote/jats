@@ -134,9 +134,18 @@ export async function validateMeca(session: ISession, file: string, opts: Partia
   const manifestString = manifestEntry.getData().toString();
   const manifestItems = extractManifestItems(manifestString);
   const zipEntries = mecaZip.getEntries();
+  // Get all file and folder names in the zip file.
+  // Folders may not be explicitly listed in zipEntries, so we compute all folders from file paths.
+  const zipEntryNames: Set<string> = new Set();
+  zipEntries.forEach((entry) => {
+    const nameParts = entry.entryName.split('/');
+    for (let i = 1; i <= nameParts.length; i++) {
+      zipEntryNames.add(nameParts.slice(0, i).join('/'));
+    }
+  });
   const manifestExtras = manifestItems
-    .filter((item) => !zipEntries.map((entry) => entry.entryName).includes(item.href))
-    .map((item) => item.href);
+    .map((item) => item.href)
+    .filter((href) => !zipEntryNames.has(href.replace(/\/$/, ''))); // Ignore trailing slash
   const zipExtras = zipEntries
     .filter((entry) => entry.entryName !== MANIFEST)
     .filter((entry) => !entry.isDirectory)
