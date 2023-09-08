@@ -1,6 +1,6 @@
 {
   "name": "meca",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Types and utilities for working with MECA",
   "author": "Rowan Cockett <rowan@curvenote.com>",
   "homepage": "https://github.com/curvenote/meca",
@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
-    "jats-xml": "^1.0.3",
+    "jats-xml": "^1.0.4",
     "xml-js": "^1.6.11"
   },
   "peerDependencies": {

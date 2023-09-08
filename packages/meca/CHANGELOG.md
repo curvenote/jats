@@ -1,5 +1,12 @@
 # meca
 
+## 1.0.4
+
+### Patch Changes
+
+- 71a4617: Fix bug where meca reports existing file in zip archive as missing
+  - jats-xml@1.0.4
+
 ## 1.0.3
 
 ### Patch Changes

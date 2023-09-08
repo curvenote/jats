@@ -1,5 +1,11 @@
 # jats-xml
 
+## 1.0.4
+
+### Patch Changes
+
+- jats-tags@1.0.4
+
 ## 1.0.3
 
 ### Patch Changes

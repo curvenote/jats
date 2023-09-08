@@ -1,6 +1,6 @@
 {
   "name": "jats-xml",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Types and utilities for working with JATS in Typescript",
   "author": "Rowan Cockett <rowan@curvenote.com>",
   "homepage": "https://github.com/curvenote/jats-xml",
@@ -48,7 +48,7 @@
     "adm-zip": "^0.5.10",
     "doi-utils": "^2.0.0",
     "fair-principles": "^2.0.0",
-    "jats-tags": "^1.0.3",
+    "jats-tags": "^1.0.4",
     "js-yaml": "^4.1.0",
     "node-fetch": "^3.3.1",
     "unist-util-is": "^5.2.1",
