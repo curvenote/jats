@@ -1,32 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 import AdmZip from 'adm-zip';
 import chalk from 'chalk';
-import type { Element } from 'xml-js';
-import { xml2js } from 'xml-js';
 import type { ISession, JatsOptions } from 'jats-xml';
-import { validateJatsAgainstDtd, xmllintValidate } from 'jats-xml';
+import { validateJatsAgainstDtd } from 'jats-xml';
+import { ItemTypes, MANIFEST, ManifestXml } from './manifest.js';
+import { createTempFolder, removeTempFolder } from './utils.js';
 
-const KNOWN_ITEM_TYPES: string[] = [
-  'article-metadata',
-  'article-supporting-file',
-  'manuscript',
-  'manuscript-supporting-file',
-  'article-source',
-  'article-source-environment',
-  'article-source-directory',
-];
-
-const MANIFEST = 'manifest.xml';
-
-const MANIFEST_DTD = 'MECA_manifest.dtd';
-
-type ManifestItem = {
-  href: string;
-  itemType?: string;
-  mediaType?: string;
-};
+const KNOWN_ITEM_TYPES: string[] = Object.values(ItemTypes);
 
 /**
  * Function to log debug message for passing check
@@ -44,46 +25,6 @@ function errorAndClean(session: ISession, msg: string, tempFolder?: string) {
   return false;
 }
 
-function removeTempFolder(tempFolder?: string) {
-  if (tempFolder && fs.existsSync(tempFolder)) {
-    if (fs.rmSync) {
-      // Node >= 14.14
-      fs.rmSync(tempFolder, { recursive: true });
-    } else {
-      // Node < 14.14
-      fs.rmdirSync(tempFolder, { recursive: true });
-    }
-  }
-}
-
-function createTempFolder() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'meca'));
-}
-
-/**
- * Extract list of simple manifest item from valid manifest XML
- */
-function extractManifestItems(manifestString: string) {
-  const manifest = xml2js(manifestString);
-  const items: ManifestItem[] =
-    manifest.elements
-      ?.find((element: Element) => element.name === 'manifest')
-      ?.elements?.filter((element: Element) => element.name === 'item')
-      ?.map((item: Element) => {
-        const instanceAttrs = item.elements?.find((element: Element) => element.name === 'instance')
-          ?.attributes;
-        const href = instanceAttrs?.['xlink:href'];
-        if (!href) return undefined;
-        return {
-          href,
-          itemType: item.attributes?.['item-type'],
-          mediaType: instanceAttrs['media-type'],
-        };
-      })
-      .filter((item: ManifestItem | undefined) => !!item) ?? [];
-  return items;
-}
-
 /**
  * Validate a given file as MECA bundle
  *
@@ -98,6 +39,9 @@ function extractManifestItems(manifestString: string) {
  */
 export async function validateMeca(session: ISession, file: string, opts: Partial<JatsOptions>) {
   if (!fs.existsSync(file)) return errorAndClean(session, `Input file does not exists: ${file}`);
+  if (!(file.endsWith('.meca') || file.endsWith('-meca.zip'))) {
+    session.log.warn(`Some providers may require a file ending with '.meca' or '-meca.zip'`);
+  }
   let mecaZip: AdmZip;
   try {
     mecaZip = new AdmZip(file);
@@ -113,25 +57,15 @@ export async function validateMeca(session: ISession, file: string, opts: Partia
     );
   }
   debugCheck(session, `includes ${MANIFEST}`);
-  const localDtdFile = fs.existsSync(path.join(__dirname, MANIFEST_DTD))
-    ? path.join(__dirname, MANIFEST_DTD)
-    : path.join(__dirname, '..', MANIFEST_DTD);
-  if (!fs.existsSync(localDtdFile)) {
-    throw new Error(`Unable to locate manifest DTD file ${MANIFEST_DTD} in meca lib distribution`);
-  }
+  const manifestString = manifestEntry.getData().toString();
+  const manifest = new ManifestXml(manifestString, { log: session.log });
   const tempFolder = createTempFolder();
-  mecaZip.extractEntryTo(MANIFEST, tempFolder);
-  const manifestIsValid = await xmllintValidate(
-    session,
-    path.join(tempFolder, MANIFEST),
-    localDtdFile,
-  );
+  const manifestIsValid = await manifest.validateXml();
   if (!manifestIsValid) {
     return errorAndClean(session, `${MANIFEST} DTD validation failed`, tempFolder);
   }
   debugCheck(session, `${MANIFEST} passes schema validation`);
-  const manifestString = manifestEntry.getData().toString();
-  const manifestItems = extractManifestItems(manifestString);
+  const manifestItems = manifest.items;
   const zipEntries = mecaZip.getEntries();
   // Get all file and folder names in the zip file.
   // Folders may not be explicitly listed in zipEntries, so we compute all folders from file paths.
@@ -162,13 +96,13 @@ export async function validateMeca(session: ISession, file: string, opts: Partia
       tempFolder,
     );
   }
-  debugCheck(session, 'manfiest matches MECA bundle contents');
+  debugCheck(session, 'manifest matches MECA bundle contents');
   manifestItems.forEach((item) => {
     if (!item.mediaType) {
       session.log.warn(`manifest item missing media-type: ${item.href}`);
     }
     if (!item.itemType) {
-      session.log.warn(`manifest item missing item-type: ${item.href} `);
+      session.log.warn(`manifest item missing item-type: ${item.href}`);
     } else if (!KNOWN_ITEM_TYPES.includes(item.itemType)) {
       session.log.warn(`manifest item has unknown item-type "${item.itemType}": ${item.href} `);
     }
@@ -176,6 +110,7 @@ export async function validateMeca(session: ISession, file: string, opts: Partia
   const jatsFiles = manifestItems
     .filter((item) => item.itemType === 'article-metadata')
     .map((item) => item.href);
+
   const invalidJatsFiles = (
     await Promise.all(
       jatsFiles.map(async (jatsFile) => {

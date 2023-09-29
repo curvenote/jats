@@ -26,7 +26,7 @@
   },
   "bin": "./dist/meca.cjs",
   "scripts": {
-    "copy:dtd": "cp ./static/MECA_manifest.dtd dist/MECA_manifest.dtd",
+    "copy:dtd": "cp ./static/manifest-1.0.dtd dist/manifest-1.0.dtd",
     "copy:version": "echo \"const version = '\"$npm_package_version\"';\nexport default version;\" > src/version.ts",
     "clean": "rm -rf dist",
     "unlink": "npm uninstall -g meca;",

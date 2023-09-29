@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE manifest PUBLIC "-//MECA//DTD Manifest v1.0//en" "https://meca.zip/manifest-1.0.dtd">
+<manifest manifest-version="1" xmlns="https://manuscriptexchange.org/schema/manifest"
+  xmlns:xlink="http://www.w3.org/1999/xlink">
+  <item item-type="transfer-metadata">
+    <instance conversion="metadata" xlink:href="transfer.xml" media-type="application/xml" />
+  </item>
+  <item item-type="article-metadata">
+    <instance xlink:href="elifeExample.xml" media-type="application/xml" />
+  </item>
+  <item item-type="manuscript">
+    <instance xlink:href="blank.pdf" media-type="application/pdf" />
+  </item>
+</manifest>
