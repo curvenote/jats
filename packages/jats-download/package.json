@@ -1,0 +1,42 @@
+{
+  "name": "jats-download",
+  "version": "1.0.4",
+  "description": "Types and utilities for downloading JATS",
+  "author": "Rowan Cockett <rowan@curvenote.com>",
+  "homepage": "https://github.com/curvenote/jats",
+  "license": "MIT",
+  "sideEffects": false,
+  "type": "module",
+  "exports": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "jats",
+    "open-science",
+    "publishing"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/curvenote/jats.git"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "lint": "eslint \"src/**/*.ts*\" -c ./.eslintrc.cjs",
+    "lint:format": "prettier --check \"src/**/*.{ts,tsx,md}\"",
+    "build:esm": "tsc",
+    "build": "npm-run-all -l clean -p build:esm"
+  },
+  "bugs": {
+    "url": "https://github.com/curvenote/jats/issues"
+  },
+  "dependencies": {
+    "doi-utils": "^2.0.0",
+    "node-fetch": "^3.3.1",
+    "myst-cli-utils": "^2.0.0"
+  }
+}

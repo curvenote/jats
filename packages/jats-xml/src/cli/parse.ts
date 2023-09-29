@@ -9,10 +9,9 @@ import { Tags } from 'jats-tags';
 import { toText } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { getSession } from '../session.js';
-import type { ISession, ResolutionOptions } from '../types.js';
+import type { ISession } from '../types.js';
 import { Jats } from '../jats.js';
-import { downloadJatsFromUrl } from './download.js';
-import { DEFAULT_RESOLVERS } from '../resolvers.js';
+import { downloadJatsFromUrl, DEFAULT_RESOLVERS, type ResolutionOptions } from 'jats-download';
 import { findArticleId, formatDate, toDate } from '../utils.js';
 
 function hasValidExtension(output: string) {
