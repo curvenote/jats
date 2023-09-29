@@ -44,7 +44,7 @@ describe('manifest reading', () => {
       },
     });
   });
-  test.only('round trip manifest', async () => {
+  test('round trip manifest', async () => {
     const data = fs.readFileSync('tests/manifest-spec.xml').toString();
     const manifest = new ManifestXml(data);
     const trip = createManifestXml(manifest.items);
