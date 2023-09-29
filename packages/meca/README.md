@@ -1,8 +1,8 @@
 # meca
 
 [![meca on npm](https://img.shields.io/npm/v/meca.svg)](https://www.npmjs.com/package/meca)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/curvenote/meca/blob/main/LICENSE)
-[![CI](https://github.com/curvenote/meca/workflows/CI/badge.svg)](https://github.com/curvenote/meca/actions)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/curvenote/jats/blob/main/LICENSE)
+[![CI](https://github.com/curvenote/jats/workflows/CI/badge.svg)](https://github.com/curvenote/jats/actions)
 
 Types and utilities for working with MECA bundles documents in Node and Typescript.
 
