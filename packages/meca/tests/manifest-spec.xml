@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE manifest PUBLIC "-//MECA//DTD Manifest v1.0//en" "https://meca.zip/manifest-1.0.dtd">
+<manifest manifest-version="1" xmlns="https://manuscriptexchange.org/schema/manifest"
+  xmlns:xlink="http://www.w3.org/1999/xlink">
+  <item id="random-identifier1" item-type="article-metadata">
+    <item-description>This is the article.xml file that contains the submission’s metadata</item-description>
+    <instance media-type="application/xml" xlink:href="DEMO151_D-18-01229.xml" />
+  </item>
+  <item id="random-identifier2" item-type="review-metadata">
+    <item-description>This is the review xml file that contains the submission’s metadata</item-description>
+    <instance media-type="application/xml" xlink:href="DEMO151_D-18-01229_Reviews.xml" />
+  </item>
+  <item id="random-identifier3" item-type="transfer-metadata">
+    <item-description>This is the transfer xml file that contains information about the source and
+      destination</item-description>
+    <instance media-type="application/xml" xlink:href="DEMO151_D-18-01229_Transfer.xml" />
+  </item>
+  <item id="a-222" item-type="manuscript" item-version="0">
+    <item-description>This is the manuscript submitted by the author</item-description>
+    <file-order>5</file-order>
+    <instance media-type="application/vnd.openxmlformatsofficedocument.wordprocessingml.document"
+      xlink:href="Manuscript.docx" />
+  </item>
+  <item id="a-123" item-type="author agreement" item-version="0">
+    <item-description>Author Agreement</item-description>
+    <file-order>1</file-order>
+    <instance media-type="application/vnd.openxmlformatsofficedocument.wordprocessingml.document"
+      xlink:href="assignmentofrights.docx" />
+  </item>
+  <item id="a-456" item-type="Reviewer Response">
+    <item-description>This is the file the Author uploaded in response to comments by reviewers</item-description>
+    <instance media-type="application/msword" xlink:href="Responses.doc" />
+  </item>
+  <item id="b-456" item-type="figure" item-version="0">
+    <item-description>Figure</item-description>
+    <file-order>3</file-order>
+    <item-metadata>
+      <metadata metadata-name="Figure Number">1</metadata>
+      <metadata metadata-name="Caption"
+      >This is the caption for Figure 1</metadata>
+    </item-metadata>
+    <instance media-type="image/jpeg" xlink:href="wrist_scaphoidvx_diagnosis.jpg" />
+  </item>
+  <item id="c-567" item-type="figure" item-version="1">
+    <item-description>Figure</item-description>
+    <file-order>4</file-order>
+    <instance media-type="image/jpeg" xlink:href="wrist_scaphoidfx_causes.jpg" />
+  </item>
+  <item id="d-891" item-type="supplemental">
+    <item-description>Supplementary Data File</item-description>
+    <instance media-type="text/plain"
+      xlink:href="https://landsatpds.s3.amazonaws.com/c1/L8/139/045/LC08_L1TP_139045_20170304_20170316_01_T1/index.htm
+l" />
+  </item>
+  <item item-type="Author/Editor PDF" item-version="0">
+    <item-description>Working PDF</item-description>
+    <instance media-type="application/pdf" xlink:href="DEMO151_D-18-01229.PDF" />
+  </item>
+  <item id="e-123" item-type="Manuscript" item-version="1">
+    <item-description>This is an arXiv file uploaded by the Author</item-description>
+    <file-order>2</file-order>
+    <item-metadata>
+      <metadata metadata-name="Includes References">Yes</metadata>
+    </item-metadata>
+    <instance media-type="application/x-tex" xlink:href="ehII_180124.tex" />
+  </item>
+  <item id="f-345" item-type="Reviewer Attachment">
+    <item-description>This is an annotated file uploaded by the Reviewer</item-description>
+    <instance media-type="application/msword" xlink:href="annotated-review.docx" />
+  </item>
+  <item id="custom-metadata-id-7" item-type="Author Proof">
+    <item-description>This is a production file</item-description>
+    <instance media-type="application/xml" xlink:href="marked-up-manuscript.xml" />
+  </item>
+</manifest>

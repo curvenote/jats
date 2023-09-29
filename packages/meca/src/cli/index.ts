@@ -7,6 +7,6 @@ const program = new Command();
 
 addValidateCLI(program);
 
-program.version(`v${version}`, '-v, --version', 'Print the current version of jats-xml');
+program.version(`v${version}`, '-v, --version', 'Print the current version of meca');
 program.option('-d, --debug', 'Log out any errors to the console.');
 program.parse(process.argv);

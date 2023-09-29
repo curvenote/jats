@@ -9,4 +9,12 @@ describe('meca validation', () => {
   test('empty file errors in wrapper', async () => {
     await expect(validateMecaWrapper(new Session(), '', {})).rejects.toThrow();
   });
+  test('validate example', async () => {
+    const valid = await validateMeca(new Session(), 'tests/example.zip', {});
+    expect(valid).toBe(true);
+  });
+  test('validate example', async () => {
+    const valid = await validateMeca(new Session(), 'tests/example.meca', {});
+    expect(valid).toBe(true);
+  });
 });
