@@ -3,7 +3,7 @@
   "version": "1.0.4",
   "description": "Types and utilities for working with MECA",
   "author": "Rowan Cockett <rowan@curvenote.com>",
-  "homepage": "https://github.com/curvenote/meca",
+  "homepage": "https://github.com/curvenote/jats",
   "license": "MIT",
   "sideEffects": false,
   "type": "module",
@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/curvenote/meca.git"
+    "url": "git+https://github.com/curvenote/jats.git"
   },
   "bin": "./dist/meca.cjs",
   "scripts": {
@@ -36,12 +36,12 @@
     "test:watch": "npm run copy:version && vitest watch",
     "lint": "eslint \"src/**/*.ts*\" -c ./.eslintrc.cjs",
     "lint:format": "prettier --check \"src/**/*.{ts,tsx,md}\"",
-    "build:esm": "tsc --project ./tsconfig.json --module es2015 --outDir dist --declaration",
+    "build:esm": "tsc",
     "build:cli": "esbuild src/cli/index.ts --bundle --outfile=dist/meca.cjs --platform=node",
     "build": "npm-run-all -l clean copy:version -p build:esm build:cli -s copy:dtd"
   },
   "bugs": {
-    "url": "https://github.com/curvenote/meca/issues"
+    "url": "https://github.com/curvenote/jats/issues"
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
