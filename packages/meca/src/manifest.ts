@@ -72,9 +72,7 @@ export class ManifestXml {
     // This works both compiled and in tests
     const dtd = fs.existsSync(path.join(__dirname, MANIFEST_DTD))
       ? path.join(__dirname, MANIFEST_DTD)
-      : fs.existsSync(path.join(__dirname, '..', MANIFEST_DTD))
-      ? path.join(__dirname, '..', MANIFEST_DTD)
-      : path.join(__dirname, '..', '..', 'static', MANIFEST_DTD);
+      : path.join(__dirname, '..', 'static', MANIFEST_DTD);
     if (fs.existsSync(dtd)) return dtd;
     throw new Error(`Unable to locate manifest DTD file ${MANIFEST_DTD} in meca lib distribution`);
   }

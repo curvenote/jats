@@ -1,2 +1,3 @@
 export { default as version } from './version.js';
-export * from './validate/index.js';
+export * from './manifest.js';
+export * from './validate.js';
