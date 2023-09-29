@@ -3,7 +3,7 @@
   "version": "1.0.4",
   "description": "Tags and types for working with JATS in Typescript",
   "author": "Rowan Cockett <rowan@curvenote.com>",
-  "homepage": "https://github.com/curvenote/jats-xml",
+  "homepage": "https://github.com/curvenote/jats",
   "license": "MIT",
   "sideEffects": false,
   "type": "module",
@@ -22,17 +22,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/curvenote/jats-xml.git"
+    "url": "git+https://github.com/curvenote/jats.git"
   },
   "scripts": {
     "clean": "rm -rf dist",
     "lint": "eslint \"src/**/*.ts*\" -c ./.eslintrc.cjs",
     "lint:format": "prettier --check \"src/**/*.{ts,tsx,md}\"",
-    "build:esm": "tsc --project ./tsconfig.json --module es2015 --outDir dist --declaration",
+    "build:esm": "tsc",
     "build": "npm-run-all -l clean -p build:esm"
   },
   "bugs": {
-    "url": "https://github.com/curvenote/jats-xml/issues"
+    "url": "https://github.com/curvenote/jats/issues"
   },
   "dependencies": {},
   "devDependencies": {

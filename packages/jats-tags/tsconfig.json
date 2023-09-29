@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "composite": false,
-    "declaration": false,
-    "declarationMap": false,
+    "declaration": true,
+    "declarationMap": true,
     "target": "ES2019",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -17,6 +17,7 @@
     "skipLibCheck": true,
     "strict": true,
     "lib": ["es2021", "DOM"],
+    "outDir": "dist",
     "typeRoots": [
       "./types",
       "./node_modules/@types",
