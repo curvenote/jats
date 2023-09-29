@@ -70,9 +70,8 @@ function extractManifestItems(manifestString: string) {
       ?.find((element: Element) => element.name === 'manifest')
       ?.elements?.filter((element: Element) => element.name === 'item')
       ?.map((item: Element) => {
-        const instanceAttrs = item.elements?.find(
-          (element: Element) => element.name === 'instance',
-        )?.attributes;
+        const instanceAttrs = item.elements?.find((element: Element) => element.name === 'instance')
+          ?.attributes;
         const href = instanceAttrs?.['xlink:href'];
         if (!href) return undefined;
         return {

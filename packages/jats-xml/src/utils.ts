@@ -5,7 +5,7 @@ import { doi } from 'doi-utils';
 import { select, selectAll } from 'unist-util-select';
 import type { Affiliation, ArticleId, Xref } from 'jats-tags';
 import { Tags } from 'jats-tags';
-import type { Author } from 'myst-frontmatter';
+import type { Contributor } from 'myst-frontmatter';
 
 export function convertToUnist(node: Element): GenericNode | GenericParent | undefined {
   switch (node.type) {
@@ -114,8 +114,8 @@ export function findArticleId(
   return toText(doiTag) || undefined;
 }
 
-export function authorAndAffiliation(node: GenericParent, article: GenericParent): Author {
-  const author: Author = {
+export function authorAndAffiliation(node: GenericParent, article: GenericParent): Contributor {
+  const author: Contributor = {
     name: `${toText(select(Tags.givenNames, node))} ${toText(select(Tags.surname, node))}`,
   };
   const orcid = select('[contrib-id-type=orcid]', node);
