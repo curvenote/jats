@@ -1,9 +1,10 @@
 import { doi } from 'doi-utils';
 import fetch from 'node-fetch';
+import type { ISession } from 'myst-cli-utils';
 import { isUrl, tic } from 'myst-cli-utils';
 
-import type { ISession, ResolutionOptions } from '../types.js';
-import { customResolveJatsUrlFromDoi } from '../resolvers.js';
+import type { ResolutionOptions } from './types.js';
+import { customResolveJatsUrlFromDoi } from './resolvers.js';
 
 async function downloadFromUrl(
   session: ISession,
