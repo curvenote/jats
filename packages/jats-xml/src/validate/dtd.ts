@@ -260,7 +260,7 @@ export function isXmllintAvailable() {
 /**
  * Run xmllint validation
  */
-export async function xmllintValidate(session: ISession, file: string, dtd: string) {
+export async function xmllintValidate(session: Pick<ISession, 'log'>, file: string, dtd: string) {
   if (!isXmllintAvailable()) {
     session.log.error(
       `JATS validation against DTD requires xmllint\n\n${chalk.dim(
