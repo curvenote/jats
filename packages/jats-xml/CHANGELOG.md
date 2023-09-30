@@ -1,5 +1,19 @@
 # jats-xml
 
+## 1.0.5
+
+### Patch Changes
+
+- 71402d0: XML read --> unist use the \_type attribute.
+- bb9af8b: Relax xmlValidate taking session (only need log)
+- 4bb09b5: Update cli-utils and export unist helpers
+- 76decdf: Split out download functionality into a separate package.
+- 913965b: Change the typescript config and package github
+- Updated dependencies [76decdf]
+- Updated dependencies [913965b]
+  - jats-download@1.0.5
+  - jats-tags@1.0.5
+
 ## 1.0.4
 
 ### Patch Changes

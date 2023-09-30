@@ -1,5 +1,19 @@
 # meca
 
+## 1.0.5
+
+### Patch Changes
+
+- ddcaefa: Add a manifest.xml class
+- 4bb09b5: Update cli-utils and export unist helpers
+- 913965b: Change the typescript config and package github
+- Updated dependencies [71402d0]
+- Updated dependencies [bb9af8b]
+- Updated dependencies [4bb09b5]
+- Updated dependencies [76decdf]
+- Updated dependencies [913965b]
+  - jats-xml@1.0.5
+
 ## 1.0.4
 
 ### Patch Changes

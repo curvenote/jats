@@ -1,5 +1,11 @@
 # jats-tags
 
+## 1.0.5
+
+### Patch Changes
+
+- 913965b: Change the typescript config and package github
+
 ## 1.0.4
 
 ## 1.0.3
