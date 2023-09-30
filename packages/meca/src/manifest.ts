@@ -77,13 +77,19 @@ export class ManifestXml {
     throw new Error(`Unable to locate manifest DTD file ${MANIFEST_DTD} in meca lib distribution`);
   }
 
-  async validateXml() {
+  async validateXml(remoteDtd?: string) {
     const tempFolder = createTempFolder();
     fs.writeFileSync(path.join(tempFolder, MANIFEST), this.rawXML);
+    let dtdFile = this.localDtd;
+    if (remoteDtd) {
+      const data = await (await fetch(remoteDtd)).text();
+      dtdFile = path.join(tempFolder, MANIFEST_DTD);
+      fs.writeFileSync(dtdFile, data);
+    }
     const manifestIsValid = await xmllintValidate(
       this,
       path.join(tempFolder, MANIFEST),
-      this.localDtd,
+      dtdFile,
     ).catch(() => {
       this.log.error(`${MANIFEST} DTD validation failed`);
       return false;
@@ -142,13 +148,20 @@ export class ManifestXml {
   }
 
   get articleMetadata(): ManifestItem | undefined {
-    return this.items.filter((item) => item.itemType === ItemTypes.articleMetadata)[0];
+    const items = this.items.filter((item) => item.itemType === ItemTypes.articleMetadata);
+    if (items.length > 1) this.log.warn('More than 1 article metadata found');
+    return items[0];
+  }
+
+  get transferMetadata(): ManifestItem[] {
+    return this.items.filter((item) => item.itemType === ItemTypes.transferMetadata);
   }
 }
 
 type WriteOptions = {
   /** Some publishers prefer `href` instead of `xlink:href`, which is in the spec */
-  noXLink: boolean;
+  noXLink?: boolean;
+  dtdUrl?: string;
 };
 
 function writeManifestItem(item: ManifestItem, opts?: WriteOptions): Element {
@@ -194,8 +207,9 @@ export function createManifestXml(manifestItems: ManifestItem[], opts?: WriteOpt
     elements: [
       {
         type: 'doctype',
-        doctype:
-          'manifest PUBLIC "-//MECA//DTD Manifest v1.0//en" "https://meca.zip/manifest-1.0.dtd"',
+        doctype: `manifest PUBLIC "-//MECA//DTD Manifest v1.0//en" "${
+          opts?.dtdUrl ?? 'https://meca.zip/manifest-1.0.dtd'
+        }"`,
       },
       {
         type: 'element',

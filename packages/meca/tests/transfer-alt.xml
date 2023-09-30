@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE transfer PUBLIC "-//MECA//DTD Transfer v1.0//EN" "https://meca.zip/transfer-ejp.dtd">
+<transfer xmlns="" version="1.0">
+  <source>
+    <service-provider>
+      <provider-name>Curvenote Publishing</provider-name>
+      <contact role="Technical Support">
+        <contact-name>
+          <surname>Support</surname>
+          <given-names>Curvenote</given-names>
+        </contact-name>
+        <email>support@curvenote.com</email>
+      </contact>
+    </service-provider>
+    <publication type="journal">
+      <title>Notebooks Now!</title>
+      <acronym>nn</acronym>
+      <contact role="Editor">
+        <contact-name>
+          <surname>Support</surname>
+          <given-names>Curvenote</given-names>
+        </contact-name>
+        <email>support@curvenote.com</email>
+        <phone />
+      </contact>
+    </publication>
+  </source>
+  <destination>
+    <service-provider>
+      <provider-name />
+      <contact>
+        <contact-name>
+          <surname />
+          <given-names />
+        </contact-name>
+        <email />
+        <phone />
+      </contact>
+    </service-provider>
+    <publication type="journal">
+      <title>Notebooks Now!</title>
+      <acronym>nn</acronym>
+      <contact role="Editor">
+        <contact-name>
+          <surname />
+          <given-names />
+        </contact-name>
+        <email>support@curvenote.com</email>
+        <phone />
+      </contact>
+    </publication>
+  </destination>
+  <processing-instructions>
+    <comments>Please publish this JATS notebook</comments>
+  </processing-instructions>
+</transfer>

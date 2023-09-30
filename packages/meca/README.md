@@ -79,6 +79,69 @@ which translates to the following XML, for example, from the NISO spec:
 
 We assume that there is only one instance for each `item` and will warn if that is not the case.
 
+### transfer.xml
+
+```typescript
+import fs from 'fs';
+import { TransferXml, createTransferXml } from 'meca';
+
+const data = fs.readFileSync('manifest.xml').toString();
+const transfer = new TransferXml(data);
+console.log(transfer.source);
+
+// Write a transfer file
+const roundTrip = createTransferXml({ source, destination, instructions });
+fs.writeFileSync('transfer.xml', roundTrip);
+```
+
+The `source` has the following structure:
+
+```typescript
+const source = {
+  provider: {
+    name: 'Aries Systems',
+    contact: {
+      name: { given: 'Mary', surname: 'Smith' },
+      email: 'MarySmith@sample.email',
+      phone: '444-555-0101',
+    },
+  },
+  publication: {
+    type: 'journal',
+    title: 'The Journal of the American Medical Association',
+    acronym: 'JAMA',
+    contact: {
+      email: 'MyJournal@ariessys.com',
+    },
+  },
+};
+```
+
+Which creates the following XML:
+
+```xml
+<transfer-source>
+  <service-provider>
+    <provider-name>Aries Systems</provider-name>
+    <contact>
+      <contact-name>
+        <surname>Smith</surname>
+        <given-names>Mary</given-names>
+      </contact-name>
+      <email>MarySmith@sample.email</email>
+      <phone>444-555-0101</phone>
+    </contact>
+  </service-provider>
+  <publication type="journal">
+    <publication-title>The Journal of the American Medical Association</publication-title>
+    <acronym>JAMA</acronym>
+    <contact>
+      <email>MyJournal@ariessys.com</email>
+    </contact>
+  </publication>
+</transfer-source>
+```
+
 ---
 
 This package is [ESM only](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).

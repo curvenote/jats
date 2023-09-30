@@ -12,7 +12,9 @@ export function convertToUnist(node: Element): GenericNode | GenericParent | und
     case 'element': {
       const { name, attributes, elements } = node;
       const children = elements?.map(convertToUnist).filter((n): n is GenericNode => !!n);
-      const next: GenericNode = { type: name ?? 'unknown', ...attributes };
+      const { type, ...attrs } = attributes ?? {};
+      if (type) attrs._type = type;
+      const next: GenericNode = { type: name ?? 'unknown', ...attrs };
       if (name === 'code') {
         next.value = elements?.[0].text as string;
       } else if (children) next.children = children;
