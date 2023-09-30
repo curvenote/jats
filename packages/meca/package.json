@@ -26,7 +26,7 @@
   },
   "bin": "./dist/meca.cjs",
   "scripts": {
-    "copy:dtd": "cp ./static/manifest-1.0.dtd dist/manifest-1.0.dtd",
+    "copy:dtd": "cp ./static/manifest-1.0.dtd dist/manifest-1.0.dtd; cp ./static/transfer-1.0.dtd dist/transfer-1.0.dtd",
     "copy:version": "echo \"const version = '\"$npm_package_version\"';\nexport default version;\" > src/version.ts",
     "clean": "rm -rf dist",
     "unlink": "npm uninstall -g meca;",
@@ -46,6 +46,7 @@
   "dependencies": {
     "adm-zip": "^0.5.10",
     "jats-xml": "^1.0.4",
+    "node-fetch": "^3.3.1",
     "xml-js": "^1.6.11"
   },
   "peerDependencies": {

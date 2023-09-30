@@ -1,0 +1,44 @@
+<!-- DOCTYPE manifest PUBLIC “-//MECA//DTD Transfer v1.0//en" "https://meca.zip/transfer-1.0.dtd" -->
+<!-- ============================================================= -->
+<!-- SPECIAL CHARACTER MODULES -->
+<!-- ============================================================= -->
+<!-- SPECIAL CHARACTERS DECLARATIONS -->
+<!-- Declares any standard XML special character
+ entities used in this DTD -->
+<!ENTITY % xmlspecchars.ent
+ PUBLIC
+"-//NLM//DTD JATS (Z39.96) JATS DTD Suite XML Special Characters Module v1.2 20190208//EN"
+"JATS-xmlspecchars1.ent" >
+<!-- CUSTOM SPECIAL CHARACTERS DECLARATIONS -->
+<!-- Declares any custom special character
+ entities created for this Suite -->
+<!ENTITY % chars.ent PUBLIC
+"-//NLM//DTD JATS (Z39.96) JATS DTD Suite Custom Special Characters Module v1.2
+20190208//EN"
+"JATS-chars1.ent" >
+<!ELEMENT transfer (transfer-source, destination, processing-instructions?)>
+<!ATTLIST transfer xmlns CDATA #FIXED "https://manuscriptexchange.org/schema/transfer">
+<!ATTLIST transfer transfer-version CDATA #REQUIRED>
+<!ELEMENT transfer-source (service-provider?, publication, security?)>
+<!ELEMENT service-provider (provider-name?, contact?)>
+<!ELEMENT provider-name (#PCDATA)>
+<!ELEMENT contact (contact-name?, (email|phone)+)>
+<!ATTLIST contact contact-role CDATA #IMPLIED>
+<!ELEMENT contact-name (surname?, given-names?)>
+<!ELEMENT surname (#PCDATA)>
+<!ELEMENT given-names (#PCDATA)>
+<!ELEMENT email (#PCDATA)>
+<!ELEMENT phone (#PCDATA)>
+<!ELEMENT publication (publication-title, acronym?, contact?)>
+<!ATTLIST publication type CDATA #IMPLIED>
+<!ELEMENT publication-title (#PCDATA)>
+<!ELEMENT acronym (#PCDATA)>
+<!ELEMENT security (authentication-code)>
+<!ELEMENT authentication-code (#PCDATA)>
+<!ELEMENT destination (service-provider, publication, security?)>
+<!-- The processing instructions tag is a placeholder for implementation-specific instructions between
+vendors and publishers-->
+<!ELEMENT processing-instructions (processing-instruction*, processing-comments?)>
+<!ELEMENT processing-instruction (#PCDATA)>
+<!ATTLIST processing-instruction processing-sequence CDATA #IMPLIED>
+<!ELEMENT processing-comments (#PCDATA)>

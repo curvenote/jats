@@ -6,6 +6,7 @@ import type { ISession, JatsOptions } from 'jats-xml';
 import { validateJatsAgainstDtd } from 'jats-xml';
 import { ItemTypes, MANIFEST, ManifestXml } from './manifest.js';
 import { createTempFolder, removeTempFolder } from './utils.js';
+import { TRANSFER, TransferXml } from './transfer.js';
 
 const KNOWN_ITEM_TYPES: string[] = Object.values(ItemTypes);
 
@@ -63,6 +64,26 @@ export async function validateMeca(session: ISession, file: string, opts: Partia
   const manifestIsValid = await manifest.validateXml();
   if (!manifestIsValid) {
     return errorAndClean(session, `${MANIFEST} DTD validation failed`, tempFolder);
+  }
+  const transferFiles = await Promise.all(
+    manifest.transferMetadata?.map(async (item) => {
+      const entry = mecaZip.getEntry(item.href);
+      if (!entry) return false;
+      const data = entry.getData().toString();
+      console.log(data);
+      try {
+        const transfer = new TransferXml(data);
+        const valid = await transfer.validateXml();
+        if (!valid) session.log.error(`${TRANSFER} DTD validation failed`);
+        return valid;
+      } catch (error) {
+        session.log.error(`Could not read ${item.href} or DTD validation failed`);
+        return false;
+      }
+    }),
+  );
+  if (!transferFiles.reduce((a, b) => a && b, true)) {
+    return errorAndClean(session, `${TRANSFER} validation failed`, tempFolder);
   }
   debugCheck(session, `${MANIFEST} passes schema validation`);
   const manifestItems = manifest.items;

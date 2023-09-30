@@ -1,0 +1,58 @@
+<!DOCTYPE transfer PUBLIC "-//MECA//DTD Transfer v1.0//en" "https://meca.zip/transfer-1.0.dtd">
+<transfer xmlns="https://manuscriptexchange.org/schema/transfer" transfer-version="1.0">
+  <transfer-source>
+    <service-provider>
+      <provider-name>Aries Systems</provider-name>
+      <contact>
+        <contact-name>
+          <surname>Smith</surname>
+          <given-names>Mary</given-names>
+        </contact-name>
+        <email>MarySmith@sample.email</email>
+        <phone>444-555-0101</phone>
+      </contact>
+    </service-provider>
+    <publication type="journal">
+      <publication-title>The Journal of the American Medical Association</publication-title>
+      <acronym>JAMA</acronym>
+      <contact>
+        <email>MyJournal@ariessys.com</email>
+      </contact>
+    </publication>
+  </transfer-source>
+  <destination>
+    <service-provider>
+      <provider-name>Highwire</provider-name>
+      <contact contact-role="Project Manager">
+        <contact-name>
+          <surname>Rogers</surname>
+          <given-names>John</given-names>
+        </contact-name>
+        <email>jrogers@highwire.com</email>
+        <phone>444-555-1212</phone>
+      </contact>
+    </service-provider>
+    <publication type="preprint-server">
+      <publication-title>bioRxiv</publication-title>
+      <acronym>bioRxiv</acronym>
+      <contact contact-role="Managing Editor">
+        <contact-name>
+          <surname>Rogers</surname>
+          <given-names>Sally</given-names>
+        </contact-name>
+        <email>srogers@bioarxiv.com</email>
+        <phone>301-555-1212</phone>
+      </contact>
+    </publication>
+    <security>
+      <authentication-code>abdasa-13123-abae</authentication-code>
+    </security>
+  </destination>
+  <processing-instructions>
+    <processing-instruction processing-sequence="1"
+    >Verify XML First</processing-instruction>
+    <processing-instruction processing-sequence="2"
+    >Load XML</processing-instruction>
+    <processing-comments>Free form comments</processing-comments>
+  </processing-instructions>
+</transfer>
