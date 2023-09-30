@@ -11,7 +11,7 @@ import { select, selectAll } from 'unist-util-select';
 import { getSession } from '../session.js';
 import type { ISession } from '../types.js';
 import { Jats } from '../jats.js';
-import { downloadJatsFromUrl, DEFAULT_RESOLVERS, type ResolutionOptions } from 'jats-download';
+import { downloadJatsFromUrl, DEFAULT_RESOLVERS, type ResolutionOptions } from 'jats-fetch';
 import { findArticleId, formatDate, toDate } from '../utils.js';
 
 function hasValidExtension(output: string) {

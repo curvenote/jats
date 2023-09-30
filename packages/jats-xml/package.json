@@ -48,7 +48,7 @@
     "adm-zip": "^0.5.10",
     "doi-utils": "^2.0.0",
     "fair-principles": "^2.0.0",
-    "jats-download": "^1.0.5",
+    "jats-fetch": "^1.0.5",
     "jats-tags": "^1.0.5",
     "js-yaml": "^4.1.0",
     "node-fetch": "^3.3.1",

@@ -1,19 +1,19 @@
-# jats-download
+# jats-fetch
 
-[![jats-download on npm](https://img.shields.io/npm/v/jats-download.svg)](https://www.npmjs.com/package/jats-download)
+[![jats-fetch on npm](https://img.shields.io/npm/v/jats-fetch.svg)](https://www.npmjs.com/package/jats-fetch)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/curvenote/jats/blob/main/LICENSE)
 [![CI](https://github.com/curvenote/jats/workflows/CI/badge.svg)](https://github.com/curvenote/jats/actions)
 
 Utilities for finding and downloading JATS XML documents.
 
 ```
-npm install jats-download
+npm install jats-fetch
 ```
 
 ## Download JATS
 
 ```typescript
-import { downloadJatsFromUrl } from 'jats-download';
+import { downloadJatsFromUrl } from 'jats-fetch';
 ```
 
 ---

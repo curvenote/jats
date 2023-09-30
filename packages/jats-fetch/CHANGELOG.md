@@ -1,4 +1,4 @@
-# jats-download
+# jats-fetch
 
 ## 1.0.5
 
