@@ -21,7 +21,7 @@ describe('meca validation', () => {
     const valid = await validateMeca(new Session(), 'tests/example-with-transfer.zip', {});
     expect(valid).toBe(true);
   });
-  test.only('validate example with bad transfer', async () => {
+  test('validate example with bad transfer', async () => {
     const valid = await validateMeca(new Session(), 'tests/bad-transfer-xml.zip', {});
     expect(valid).toBe(false);
   });
