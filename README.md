@@ -33,7 +33,7 @@ See packages folder:
 
 - [jats-xml](./packages/jats-xml)
 - [jats-tags](./packages/jats-tags)
-- [jats-download](./packages/jats-download)
+- [jats-fetch](./packages/jats-fetch)
 - [meca](./packages/meca)
 
 ---
