@@ -14,6 +14,10 @@ export type Front = GenericParent & {
   type: Tags.front;
 };
 
+export type ArticleMeta = GenericParent & {
+  type: Tags.articleMeta;
+};
+
 export type Body = GenericParent & {
   type: Tags.body;
 };

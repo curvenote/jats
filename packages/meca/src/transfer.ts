@@ -54,8 +54,8 @@ export type ProcessingInstructions = {
 };
 
 export type Transfer = {
-  source?: Location;
-  destination?: Location;
+  source?: Location & Required<Pick<Location, 'provider'>>;
+  destination?: Location & Required<Pick<Location, 'provider' | 'publication'>>;
   instructions?: ProcessingInstructions;
 };
 

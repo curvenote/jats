@@ -25,9 +25,7 @@ export function convertToUnist(node: Element): GenericNode | GenericParent | und
       return {
         type: 'text',
         ...attributes,
-        value: String(text)
-          .replace(/\n(\s+)$/, '')
-          .replace('\n', ' '),
+        value: String(text).replace(/\n(\s+)$/, ''),
       };
     }
     case 'cdata': {
@@ -52,6 +50,35 @@ export function convertToUnist(node: Element): GenericNode | GenericParent | und
       console.log(node);
       throw new Error(`found ${node.type} ${node.name}`);
   }
+}
+
+export function convertToXml(node: GenericNode): Element {
+  const { type, ...rest } = node;
+  switch (type) {
+    case 'text': {
+      const { value, ...attributes } = rest;
+      return { type: 'text', attributes, text: value };
+    }
+    case 'code': {
+      const { value, ...attributes } = rest;
+      return { type: 'element', name: type, attributes, elements: [{ type: 'text', text: value }] };
+    }
+    case 'comment': {
+      return { type: 'comment', comment: rest.value };
+    }
+    case 'cdata': {
+      const { cdata, ...attributes } = rest;
+      return { type: 'cdata', attributes, cdata };
+    }
+    default: {
+      const { children, ...attributes } = rest;
+      return { type: 'element', name: type, attributes, elements: children?.map(convertToXml) };
+    }
+  }
+}
+
+export function escapeForXML(text: string) {
+  return text.replace(/&(?!amp;)/g, '&amp;').replace(/</g, '&lt;');
 }
 
 const MonthLookup: Record<string, number> = {

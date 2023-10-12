@@ -70,9 +70,8 @@ export async function validateMeca(session: ISession, file: string, opts: Partia
       const entry = mecaZip.getEntry(item.href);
       if (!entry) return false;
       const data = entry.getData().toString();
-      console.log(data);
       try {
-        const transfer = new TransferXml(data);
+        const transfer = new TransferXml(data, { log: session.log });
         const valid = await transfer.validateXml();
         if (!valid) session.log.error(`${TRANSFER} DTD validation failed`);
         return valid;

@@ -96,4 +96,10 @@ describe('Basic JATS read', () => {
       oasis: false,
     });
   });
+  test('write JATS', async () => {
+    const file = 'tests/basicExample.xml';
+    const data = fs.readFileSync(file).toString();
+    const jats = new Jats(data);
+    expect(jats.serialize()).toBe(data);
+  });
 });

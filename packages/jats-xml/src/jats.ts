@@ -1,12 +1,19 @@
 import type { GenericNode, GenericParent } from 'myst-common';
 import { toText } from 'myst-common';
-import { xml2js } from 'xml-js';
+import { xml2js, js2xml } from 'xml-js';
 import { doi } from 'doi-utils';
 import type { Element, DeclarationAttributes } from 'xml-js';
 import type { PageFrontmatter } from 'myst-frontmatter';
 import { select as unistSelect, selectAll } from 'unist-util-select';
 import { Tags } from 'jats-tags';
-import { authorAndAffiliation, convertToUnist, findArticleId, toDate } from './utils.js';
+import {
+  authorAndAffiliation,
+  convertToUnist,
+  convertToXml,
+  escapeForXML,
+  findArticleId,
+  toDate,
+} from './utils.js';
 import type {
   Front,
   Body,
@@ -26,15 +33,30 @@ import type {
   KeywordGroup,
   Keyword,
   ArticleCategories,
+  ArticleMeta,
 } from 'jats-tags';
 import type { Logger } from 'myst-cli-utils';
 import { tic } from 'myst-cli-utils';
+import { articleMetaOrder } from './order.js';
 
 type Options = { log?: Logger; source?: string };
 
 function select<T extends GenericNode>(selector: string, node?: GenericNode): T | undefined {
   return (unistSelect(selector, node) ?? undefined) as T | undefined;
 }
+
+const DEFAULT_DOCTYPE =
+  'article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD with MathML3 v1.3 20210610//EN" "http://jats.nlm.nih.gov/publishing/1.3/JATS-archivearticle1-3-mathml3.dtd"';
+
+export type WriteOptions = {
+  /**
+   * When 'flat', the xml will be on a single line (with exception of CDATA),
+   * When `0`, the XML will be on different lines with 0 spaces.
+   * When any other value (e.g. `2` or `\t`) the XML will be indented at the start of the line by that amount.
+   */
+  spaces?: number | 'flat' | '\t';
+  bodyOnly?: boolean;
+};
 
 export class Jats {
   declaration?: DeclarationAttributes;
@@ -89,7 +111,11 @@ export class Jats {
     return select<Front>(Tags.front, this.tree);
   }
 
-  get premissions(): Permissions | undefined {
+  get articleMeta(): ArticleMeta | undefined {
+    return select<ArticleMeta>(Tags.articleMeta, this.tree);
+  }
+
+  get permissions(): Permissions | undefined {
     return select<Permissions>(Tags.permissions, this.front);
   }
 
@@ -114,7 +140,7 @@ export class Jats {
   }
 
   get license(): License | undefined {
-    return select<License>(Tags.license, this.premissions);
+    return select<License>(Tags.license, this.permissions);
   }
 
   get keywordGroup(): KeywordGroup | undefined {
@@ -184,6 +210,46 @@ export class Jats {
 
   get references(): Reference[] {
     return selectAll(Tags.ref, this.refList) as Reference[];
+  }
+
+  sort() {
+    if (this.articleMeta) {
+      this.articleMeta.children = this.articleMeta?.children.sort(
+        (a, b) =>
+          articleMetaOrder.findIndex((x) => x === a.type) -
+          articleMetaOrder.findIndex((x) => x === b.type),
+      );
+    }
+  }
+
+  serialize(opts?: WriteOptions): string {
+    this.sort();
+    const body = convertToXml(this.tree);
+    const element = opts?.bodyOnly
+      ? body
+      : {
+          type: 'element',
+          elements: [
+            {
+              type: 'doctype',
+              doctype: this.doctype || DEFAULT_DOCTYPE,
+            },
+            body,
+          ],
+          declaration: { attributes: this.declaration ?? { version: '1.0', encoding: 'UTF-8' } },
+        };
+    const xml = js2xml(element, {
+      compact: false,
+      //  No way to write XML with new lines, but no indentation with js2xml.
+      // If you use 0 or '', you get a single line.
+      spaces: opts?.spaces === 'flat' ? 0 : opts?.spaces || 1,
+      attributeValueFn: escapeForXML,
+    });
+    if (!opts?.spaces) {
+      // either `0` or `''`
+      return xml.replace(/\n(\s*)</g, '\n<');
+    }
+    return xml;
   }
 }
 
