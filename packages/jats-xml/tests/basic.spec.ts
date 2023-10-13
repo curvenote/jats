@@ -4,7 +4,8 @@ import { toText } from 'myst-common';
 import { select } from 'unist-util-select';
 import { inferOptions, Jats } from '../src';
 import { Tags } from 'jats-tags';
-import { authorAndAffiliation, formatDate, toDate } from '../src/utils';
+import { formatDate, toDate } from 'jats-utils';
+import { authorAndAffiliation } from '../src/utils';
 
 describe('Basic JATS read', () => {
   test('read elife JATS', async () => {
