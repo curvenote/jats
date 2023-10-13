@@ -1,5 +1,15 @@
 # meca
 
+## 1.0.7
+
+### Patch Changes
+
+- 8d71b11: Align type requirements in transfer with xml DTD
+- 8d71b11: Remove console log of transfer.xml
+- Updated dependencies [8d71b11]
+- Updated dependencies [8d71b11]
+  - jats-xml@1.0.7
+
 ## 1.0.6
 
 ### Patch Changes

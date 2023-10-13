@@ -1,5 +1,11 @@
 # jats-tags
 
+## 1.0.7
+
+### Patch Changes
+
+- 8d71b11: Add ArticleMeta tag
+
 ## 1.0.6
 
 ## 1.0.5

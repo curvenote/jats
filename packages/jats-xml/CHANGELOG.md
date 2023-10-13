@@ -1,5 +1,15 @@
 # jats-xml
 
+## 1.0.7
+
+### Patch Changes
+
+- 8d71b11: premissions --> permissions
+- 8d71b11: Allow to modify the tree and write the XML
+- Updated dependencies [8d71b11]
+  - jats-tags@1.0.7
+  - jats-fetch@1.0.7
+
 ## 1.0.6
 
 ### Patch Changes
