@@ -6,7 +6,13 @@ import type { Element, DeclarationAttributes } from 'xml-js';
 import type { PageFrontmatter } from 'myst-frontmatter';
 import { select as unistSelect, selectAll } from 'unist-util-select';
 import { Tags } from 'jats-tags';
-import { authorAndAffiliation, convertToUnist, findArticleId, toDate } from './utils.js';
+import {
+  authorAndAffiliation,
+  convertToUnist,
+  convertToXml,
+  findArticleId,
+  toDate,
+} from './utils.js';
 import type {
   Front,
   Body,
@@ -26,15 +32,25 @@ import type {
   KeywordGroup,
   Keyword,
   ArticleCategories,
+  ArticleMeta,
 } from 'jats-tags';
 import type { Logger } from 'myst-cli-utils';
 import { tic } from 'myst-cli-utils';
+import { articleMetaOrder } from './order.js';
+import { serializeJatsXml, type SerializationOptions } from './serialize.js';
 
 type Options = { log?: Logger; source?: string };
 
 function select<T extends GenericNode>(selector: string, node?: GenericNode): T | undefined {
   return (unistSelect(selector, node) ?? undefined) as T | undefined;
 }
+
+const DEFAULT_DOCTYPE =
+  'article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD with MathML3 v1.3 20210610//EN" "http://jats.nlm.nih.gov/publishing/1.3/JATS-archivearticle1-3-mathml3.dtd"';
+
+type WriteOptions = SerializationOptions & {
+  bodyOnly?: boolean;
+};
 
 export class Jats {
   declaration?: DeclarationAttributes;
@@ -69,6 +85,7 @@ export class Jats {
   get frontmatter(): PageFrontmatter {
     const title = this.articleTitle;
     const subtitle = this.articleSubtitle;
+    const short_title = this.articleAltTitle;
     const date = this.publicationDate;
     const authors = this.articleAuthors;
     const firstSubject = select(Tags.subject, this.articleCategories ?? this.front);
@@ -76,6 +93,7 @@ export class Jats {
     return {
       title: title ? toText(title) : undefined,
       subtitle: subtitle ? toText(subtitle) : undefined,
+      short_title: short_title ? toText(short_title) : undefined,
       doi: this.doi ?? undefined,
       date: date ? toDate(date)?.toISOString() : undefined,
       authors: authors?.map((a) => authorAndAffiliation(a, this.tree)),
@@ -89,7 +107,11 @@ export class Jats {
     return select<Front>(Tags.front, this.tree);
   }
 
-  get premissions(): Permissions | undefined {
+  get articleMeta(): ArticleMeta | undefined {
+    return select<ArticleMeta>(Tags.articleMeta, this.tree);
+  }
+
+  get permissions(): Permissions | undefined {
     return select<Permissions>(Tags.permissions, this.front);
   }
 
@@ -114,7 +136,7 @@ export class Jats {
   }
 
   get license(): License | undefined {
-    return select<License>(Tags.license, this.premissions);
+    return select<License>(Tags.license, this.permissions);
   }
 
   get keywordGroup(): KeywordGroup | undefined {
@@ -144,6 +166,10 @@ export class Jats {
 
   get articleSubtitle(): Subtitle | undefined {
     return select<Subtitle>(Tags.subtitle, this.titleGroup);
+  }
+
+  get articleAltTitle(): Subtitle | undefined {
+    return select<Subtitle>(Tags.altTitle, this.titleGroup);
   }
 
   get abstract(): Abstract | undefined {
@@ -184,6 +210,37 @@ export class Jats {
 
   get references(): Reference[] {
     return selectAll(Tags.ref, this.refList) as Reference[];
+  }
+
+  sort() {
+    if (this.articleMeta) {
+      this.articleMeta.children = this.articleMeta?.children.sort(
+        (a, b) =>
+          articleMetaOrder.findIndex((x) => x === a.type) -
+          articleMetaOrder.findIndex((x) => x === b.type),
+      );
+    }
+  }
+
+  serialize(opts?: WriteOptions): string {
+    this.sort();
+    const body = convertToXml(this.tree);
+    const element = opts?.bodyOnly
+      ? body
+      : {
+          type: 'element',
+          elements: [
+            {
+              type: 'doctype',
+              doctype: this.doctype || DEFAULT_DOCTYPE,
+            },
+            body,
+          ],
+          declaration: { attributes: this.declaration ?? { version: '1.0', encoding: 'UTF-8' } },
+        };
+
+    const xml = serializeJatsXml(element, opts);
+    return xml;
   }
 }
 
