@@ -1,6 +1,6 @@
 import type { GenericNode, GenericParent } from 'myst-common';
 import { toText } from 'myst-common';
-import { xml2js, js2xml } from 'xml-js';
+import { xml2js } from 'xml-js';
 import { doi } from 'doi-utils';
 import type { Element, DeclarationAttributes } from 'xml-js';
 import type { PageFrontmatter } from 'myst-frontmatter';
@@ -10,7 +10,6 @@ import {
   authorAndAffiliation,
   convertToUnist,
   convertToXml,
-  escapeForXML,
   findArticleId,
   toDate,
 } from './utils.js';
@@ -38,6 +37,7 @@ import type {
 import type { Logger } from 'myst-cli-utils';
 import { tic } from 'myst-cli-utils';
 import { articleMetaOrder } from './order.js';
+import { serializeJatsXml, type SerializationOptions } from './serialize.js';
 
 type Options = { log?: Logger; source?: string };
 
@@ -48,13 +48,7 @@ function select<T extends GenericNode>(selector: string, node?: GenericNode): T 
 const DEFAULT_DOCTYPE =
   'article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD with MathML3 v1.3 20210610//EN" "http://jats.nlm.nih.gov/publishing/1.3/JATS-archivearticle1-3-mathml3.dtd"';
 
-export type WriteOptions = {
-  /**
-   * When 'flat', the xml will be on a single line (with exception of CDATA),
-   * When `0`, the XML will be on different lines with 0 spaces.
-   * When any other value (e.g. `2` or `\t`) the XML will be indented at the start of the line by that amount.
-   */
-  spaces?: number | 'flat' | '\t';
+type WriteOptions = SerializationOptions & {
   bodyOnly?: boolean;
 };
 
@@ -91,6 +85,7 @@ export class Jats {
   get frontmatter(): PageFrontmatter {
     const title = this.articleTitle;
     const subtitle = this.articleSubtitle;
+    const short_title = this.articleAltTitle;
     const date = this.publicationDate;
     const authors = this.articleAuthors;
     const firstSubject = select(Tags.subject, this.articleCategories ?? this.front);
@@ -98,6 +93,7 @@ export class Jats {
     return {
       title: title ? toText(title) : undefined,
       subtitle: subtitle ? toText(subtitle) : undefined,
+      short_title: short_title ? toText(short_title) : undefined,
       doi: this.doi ?? undefined,
       date: date ? toDate(date)?.toISOString() : undefined,
       authors: authors?.map((a) => authorAndAffiliation(a, this.tree)),
@@ -172,6 +168,10 @@ export class Jats {
     return select<Subtitle>(Tags.subtitle, this.titleGroup);
   }
 
+  get articleAltTitle(): Subtitle | undefined {
+    return select<Subtitle>(Tags.altTitle, this.titleGroup);
+  }
+
   get abstract(): Abstract | undefined {
     return select<Abstract>(Tags.abstract, this.front);
   }
@@ -238,17 +238,8 @@ export class Jats {
           ],
           declaration: { attributes: this.declaration ?? { version: '1.0', encoding: 'UTF-8' } },
         };
-    const xml = js2xml(element, {
-      compact: false,
-      //  No way to write XML with new lines, but no indentation with js2xml.
-      // If you use 0 or '', you get a single line.
-      spaces: opts?.spaces === 'flat' ? 0 : opts?.spaces || 1,
-      attributeValueFn: escapeForXML,
-    });
-    if (!opts?.spaces) {
-      // either `0` or `''`
-      return xml.replace(/\n(\s*)</g, '\n<');
-    }
+
+    const xml = serializeJatsXml(element, opts);
     return xml;
   }
 }

@@ -192,8 +192,8 @@ function writeManifestItem(item: ManifestItem, opts?: WriteOptions): Element {
           type: 'element',
           name: 'instance',
           attributes: {
-            [opts?.noXLink ? 'href' : 'xlink:href']: href,
             'media-type': mediaType,
+            [opts?.noXLink ? 'href' : 'xlink:href']: href,
           },
         },
       ] as Element[]

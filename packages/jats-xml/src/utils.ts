@@ -13,7 +13,7 @@ export function convertToUnist(node: Element): GenericNode | GenericParent | und
       const { name, attributes, elements } = node;
       const children = elements?.map(convertToUnist).filter((n): n is GenericNode => !!n);
       const { type, ...attrs } = attributes ?? {};
-      if (type) attrs._type = type;
+      if (type !== undefined) attrs._type = type;
       const next: GenericNode = { type: name ?? 'unknown', ...attrs };
       if (name === 'code') {
         next.value = elements?.[0].text as string;
@@ -71,7 +71,8 @@ export function convertToXml(node: GenericNode): Element {
       return { type: 'cdata', attributes, cdata };
     }
     default: {
-      const { children, ...attributes } = rest;
+      const { children, _type, ...attributes } = rest;
+      if (_type !== undefined) attributes.type = _type;
       return { type: 'element', name: type, attributes, elements: children?.map(convertToXml) };
     }
   }
