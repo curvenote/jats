@@ -6,13 +6,7 @@ import type { Element, DeclarationAttributes } from 'xml-js';
 import type { PageFrontmatter } from 'myst-frontmatter';
 import { select as unistSelect, selectAll } from 'unist-util-select';
 import { Tags } from 'jats-tags';
-import {
-  authorAndAffiliation,
-  convertToUnist,
-  convertToXml,
-  findArticleId,
-  toDate,
-} from './utils.js';
+import { authorAndAffiliation, findArticleId } from './utils.js';
 import type {
   Front,
   Body,
@@ -37,7 +31,13 @@ import type {
 import type { Logger } from 'myst-cli-utils';
 import { tic } from 'myst-cli-utils';
 import { articleMetaOrder } from './order.js';
-import { serializeJatsXml, type SerializationOptions } from './serialize.js';
+import {
+  serializeJatsXml,
+  type SerializationOptions,
+  convertToUnist,
+  convertToXml,
+  toDate,
+} from 'jats-utils';
 
 type Options = { log?: Logger; source?: string };
 
