@@ -30,7 +30,7 @@ import type {
 } from 'jats-tags';
 import type { Logger } from 'myst-cli-utils';
 import { tic } from 'myst-cli-utils';
-import { articleMetaOrder } from './order.js';
+import { articleMetaOrder, tableWrapOrder } from './order.js';
 import {
   serializeJatsXml,
   type SerializationOptions,
@@ -220,6 +220,11 @@ export class Jats {
           articleMetaOrder.findIndex((x) => x === b.type),
       );
     }
+    (selectAll('table-wrap', this.tree) as GenericParent[]).forEach((tw) => {
+      tw.children = tw.children.sort(
+        (a, b) => (tableWrapOrder[a.type] ?? -1) - (tableWrapOrder[b.type] ?? -1),
+      );
+    });
   }
 
   serialize(opts?: WriteOptions): string {
