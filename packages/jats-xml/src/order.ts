@@ -47,3 +47,42 @@ export const articleMetaOrder = [
   'counts',
   'custom-meta-group',
 ];
+
+function order(tags: (string | string[])[]): Record<string, number> {
+  return Object.fromEntries(
+    tags
+      .map((tag, i) => {
+        if (typeof tag === 'string') return [tag, i];
+        return tag.map((t) => [t, i]);
+      })
+      .flat() as [string, number][],
+  );
+}
+
+export const tableWrapOrder = order([
+  'object-id',
+  'label',
+  'caption',
+  'abstract',
+  'kwd-group',
+  'subj-group',
+  ['alt-text', 'long-desc', 'email', 'ext-link', 'uri'],
+  [
+    'disp-quote',
+    'speech',
+    'statement',
+    'verse-group',
+    'def-list',
+    'list',
+    'alternatives',
+    'chem-struct-wrap',
+    'code',
+    'disp-formula',
+    'graphic',
+    'media',
+    'preformat',
+    'table',
+    'xref',
+  ],
+  ['table-wrap-foot', 'attrib', 'permissions'],
+]);
