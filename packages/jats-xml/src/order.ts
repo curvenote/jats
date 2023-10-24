@@ -52,7 +52,7 @@ function order(tags: (string | string[])[]): Record<string, number> {
   return Object.fromEntries(
     tags
       .map((tag, i) => {
-        if (typeof tag === 'string') return [tag, i];
+        if (typeof tag === 'string') return [[tag, i]];
         return tag.map((t) => [t, i]);
       })
       .flat() as [string, number][],
