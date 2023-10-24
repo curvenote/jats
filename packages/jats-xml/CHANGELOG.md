@@ -1,5 +1,15 @@
 # jats-xml
 
+## 1.0.9
+
+### Patch Changes
+
+- f88ba59: Ensure table-wrap has correct order
+- Updated dependencies [f88ba59]
+  - jats-utils@1.0.9
+  - jats-tags@1.0.9
+  - jats-fetch@1.0.9
+
 ## 1.0.8
 
 ### Patch Changes

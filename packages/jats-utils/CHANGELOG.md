@@ -1,5 +1,12 @@
 # jats-utils
 
+## 1.0.9
+
+### Patch Changes
+
+- f88ba59: Update serialization pretty-print
+  - jats-tags@1.0.9
+
 ## 1.0.8
 
 ### Patch Changes
