@@ -86,7 +86,16 @@ export class Jats {
     const title = this.articleTitle;
     const subtitle = this.articleSubtitle;
     const short_title = this.articleAltTitle;
-    const date = this.publicationDate;
+    let date: string | undefined;
+    if (this.publicationDate) {
+      const pubDate = toDate(this.publicationDate);
+      if (pubDate) {
+        const year = pubDate.getFullYear();
+        const month = (pubDate.getMonth() + 1).toString().padStart(2, '0');
+        const day = pubDate.getDate().toString().padStart(2, '0');
+        date = `${year}-${month}-${day}`;
+      }
+    }
     const authors = this.articleAuthors;
     const firstSubject = select(Tags.subject, this.articleCategories ?? this.front);
     const journalTitle = select(Tags.journalTitle, this.front);
@@ -95,7 +104,7 @@ export class Jats {
       subtitle: subtitle ? toText(subtitle) : undefined,
       short_title: short_title ? toText(short_title) : undefined,
       doi: this.doi ?? undefined,
-      date: date ? toDate(date)?.toISOString() : undefined,
+      date,
       authors: authors?.map((a) => authorAndAffiliation(a, this.tree)),
       keywords: this.keywords?.map((k) => toText(k)),
       venue: journalTitle ? { title: toText(journalTitle) } : undefined,
