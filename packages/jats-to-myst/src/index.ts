@@ -1,9 +1,11 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import type { Root } from 'myst-spec';
 import { unified } from 'unified';
 import { doi } from 'doi-utils';
 import type { Plugin } from 'unified';
 import { VFile } from 'vfile';
+import yaml from 'js-yaml';
 import type { MessageInfo, GenericNode, GenericParent } from 'myst-common';
 import { toText, copyNode, fileError, RuleId } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
@@ -604,7 +606,38 @@ export function jatsToMystTransform(
   return { tree, jats, file, references, frontmatter }; //, kind };
 }
 
-export function jatsToMyst(input: string) {
+export function jatsToMyst(input: string, opts?: { frontmatter?: 'page' | 'project' }) {
   const { tree, frontmatter } = jatsToMystTransform(fs.readFileSync(input).toString());
-  console.log(JSON.stringify({ mdast: tree, frontmatter }, null, 2));
+  const abstract = selectAll('block', tree).find((node) => {
+    return node.data?.part === 'abstract';
+  });
+  if (abstract) {
+    frontmatter.description = descriptionFromAbstract(toText(abstract));
+  }
+  const dir = path.dirname(input);
+  const mystJson = path.join(dir, `${path.basename(input, path.extname(input))}.myst.json`);
+  const mystYml = path.join(dir, 'myst.yml');
+  if (opts?.frontmatter === 'page') {
+    fs.writeFileSync(mystJson, JSON.stringify({ mdast: tree, frontmatter }, null, 2));
+  } else if (opts?.frontmatter === 'project') {
+    if (fs.existsSync(mystYml)) {
+      // console.log('myst.yml exists; overriding with frontmatter from JATS');
+      const previous = yaml.load(fs.readFileSync(mystYml).toString()) as {
+        version: number;
+        project: ProjectFrontmatter;
+        site: Record<string, any>;
+      };
+      fs.writeFileSync(
+        mystYml,
+        yaml.dump({ ...previous, project: { ...previous.project, ...frontmatter } }),
+      );
+    } else {
+      // console.log(`writing new myst.yml file`);
+      fs.writeFileSync(mystYml, yaml.dump({ version: 1, project: frontmatter, site: {} }));
+    }
+    fs.writeFileSync(mystJson, JSON.stringify({ mdast: tree }, null, 2));
+  } else {
+    // console.log(`ignoring frontmatter`);
+    fs.writeFileSync(mystJson, JSON.stringify({ mdast: tree }, null, 2));
+  }
 }
