@@ -1,0 +1,200 @@
+cases:
+  - title: empty JATS gives no frontmatter
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article></article>
+    frontmatter: {}
+  - title: <aff> with no id ignored
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff><institution>Janelia Farm Research Campus</institution><addr-line>Howard Hughes Medical Institute 19700 Helix Drive, Ashburn, VA 20147 (USA)</addr-line></aff>
+      </front></article>
+    frontmatter: {}
+  - title: <aff> with text only
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="aff1">Janelia Farm Research Campus, Howard Hughes Medical Institute, 19700 Helix Drive, Ashburn, Virginia 20147, United States</aff>
+      </front></article>
+    frontmatter:
+      affiliations:
+        - id: aff1
+          institution: Janelia Farm Research Campus, Howard Hughes Medical Institute, 19700 Helix Drive, Ashburn, Virginia 20147, United States
+  - title: <aff> with label and text
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="af1-molecules-13-00204"><label>1</label>Department of Biochemistry, University of Wisconsin&#x02013;Madison, 433 Babcock Drive, Madison, WI 53706-1544, USA</aff>
+      </front></article>
+    frontmatter:
+      affiliations:
+        - id: af1-molecules-13-00204
+          institution: Department of Biochemistry, University of Wisconsin–Madison, 433 Babcock Drive, Madison, WI 53706-1544, USA
+  - title: <aff> with institution and addr-line
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="aff1"><institution>Janelia Farm Research Campus</institution><addr-line>Howard Hughes Medical Institute 19700 Helix Drive, Ashburn, VA 20147 (USA)</addr-line></aff>
+      </front></article>
+    frontmatter:
+      affiliations:
+        - id: aff1
+          institution: Janelia Farm Research Campus
+          address: Howard Hughes Medical Institute 19700 Helix Drive, Ashburn, VA 20147 (USA)
+  - title: <aff> with label, institution, addr-line, country, and commas
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="aff1"><label>1</label><institution>Janelia Farm Research Campus, Howard Hughes Medical Institute</institution>, <addr-line>Ashburn</addr-line>, <country>United States</country></aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: aff1
+          institution: Janelia Farm Research Campus, Howard Hughes Medical Institute
+          address: Ashburn
+          country: United States
+  - title: <aff> with label, department addr-line, institution, addr-line, country, and commas
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="aff3"><label>3</label><addr-line>Department of Molecular and Cell Biology</addr-line>, <institution>University of California, Berkeley</institution>, <addr-line>Berkeley</addr-line>, <country>United States</country></aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: aff3
+          department: Department of Molecular and Cell Biology
+          institution: University of California, Berkeley
+          address: Berkeley
+          country: United States
+  - title: <aff> with institution, country, and comma
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="aff1"><institution>University of California, San Diego</institution>, <country>United States</country></aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: aff1
+          institution: University of California, San Diego
+          country: United States
+  - title: <aff> with label, dept institution, institution, addr-line, country, and commas
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="aff3"><label>3</label><institution content-type="dept">Center for Medical, Agricultural, and Veterinary Entomology</institution>, <institution>USDA-ARS</institution>, <addr-line>Gainesville</addr-line>, <country>United States</country></aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: aff3
+          department: Center for Medical, Agricultural, and Veterinary Entomology
+          institution: USDA-ARS
+          address: Gainesville
+          country: United States
+  - title: <aff> with label with sup, named-content for organisation-division, institution, named-content for street / city / country-part / post-code, country, and no other text!
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="anie201509649-aff-0001"><label><sup>1</sup></label><named-content content-type="organisation-division">Janelia Research Campus</named-content><institution>Howard Hughes Medical Institute</institution><named-content content-type="street">19700 Helix Drive</named-content><named-content content-type="city">Ashburn</named-content><named-content content-type="country-part">VA</named-content><named-content content-type="post-code">20147</named-content><country country="US">USA</country></aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: anie201509649-aff-0001
+          department: Janelia Research Campus
+          institution: Howard Hughes Medical Institute
+          address: 19700 Helix Drive
+          city: Ashburn
+          state: VA
+          postal_code: '20147'
+          country: USA
+  - title: <aff> with label and text, ends with semicolon
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="af1"><label>1</label>Transcription Imaging Consortium, Janelia Research Campus, Howard Hughes Medical Institute, Ashburn, Virginia 20147, USA;</aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: af1
+          institution: Transcription Imaging Consortium, Janelia Research Campus, Howard Hughes Medical Institute, Ashburn, Virginia 20147, USA
+  - title: <aff> with label, institution-wrap, institution-ids, institutions, text
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="Aff1"><label>1</label><institution-wrap><institution-id institution-id-type="ISNI">0000 0000 9758 5690</institution-id><institution-id institution-id-type="ror">https://ror.org/00t9vx427</institution-id><institution>The Vollum Institute, </institution><institution>Oregon Health and Science University, </institution></institution-wrap>3181S.W. Sam Jackson Pk. Rd., Portland, OR 97239 USA </aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: Aff1
+          institution: The Vollum Institute, Oregon Health and Science University, 3181S.W. Sam Jackson Pk. Rd., Portland, OR 97239 USA
+          isni: 0000 0000 9758 5690
+          ror: https://ror.org/00t9vx427
+  - title: <aff> with text, institution, text, country
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="aff1">Janelia Research Campus, <institution>Howard Hughes Medical Institute</institution>, Ashburn, Virginia 20147, <country>United States</country></aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: aff1
+          institution: Janelia Research Campus, Howard Hughes Medical Institute, Ashburn, Virginia 20147
+          country: United States
+  - title: <aff> with label, institution-wrap, institution-ids, institution, text
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="Aff1"><label>1</label><institution-wrap><institution-id institution-id-type="ISNI">0000 0001 2106 639X</institution-id><institution-id institution-id-type="GRID">grid.412041.2</institution-id><institution>University of Bordeaux, </institution></institution-wrap>F-33000 Bordeaux, France </aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: Aff1
+          isni: 0000 0001 2106 639X
+          institution: University of Bordeaux, F-33000 Bordeaux, France
+  - title: <aff> with label, dept institution, institution, addr-line, and country
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="aff1"><label>1</label><institution content-type="dept">Department of Molecular and Cell Biology, Li Ka Shing Center for Biomedical and Health Sciences, CIRM Center of Excellence</institution><institution>University of California, Berkeley</institution><addr-line>Berkeley</addr-line><country>United States</country></aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: aff1
+          department: Department of Molecular and Cell Biology, Li Ka Shing Center for Biomedical and Health Sciences, CIRM Center of Excellence
+          institution: University of California, Berkeley
+          address: Berkeley
+          country: United States
+  - title: <aff> with label, institution, addr-line, and country
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="aff5"><label>5</label><institution>Janelia Research Campus, Howard Hughes Medical Institute</institution><addr-line>Ashburn</addr-line><country>United States</country></aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: aff5
+          institution: Janelia Research Campus, Howard Hughes Medical Institute
+          address: Ashburn
+          country: United States
+  - title: <aff> with institution and country
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="aff7"><institution>University of Oxford</institution><country>United Kingdom</country></aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: aff7
+          institution: University of Oxford
+          country: United Kingdom
+  - title: <aff> with addr-line only
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <aff id="edit1"><addr-line>Imperial College London, UNITED KINGDOM</addr-line></aff>
+      </front></article
+    frontmatter:
+      affiliations:
+        - id: edit1
+          institution: Imperial College London, UNITED KINGDOM
+  # - title: contrib group with authors/affs with no ids

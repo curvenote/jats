@@ -6,7 +6,7 @@ import type { Element, DeclarationAttributes } from 'xml-js';
 import type { PageFrontmatter } from 'myst-frontmatter';
 import { select as unistSelect, selectAll } from 'unist-util-select';
 import { Tags } from 'jats-tags';
-import { authorAndAffiliation, findArticleId } from './utils.js';
+import { findArticleId, processAffiliation, processContributor } from './utils.js';
 import type {
   Front,
   Body,
@@ -23,6 +23,7 @@ import type {
   Abstract,
   ContribGroup,
   Contrib,
+  Affiliation,
   KeywordGroup,
   Keyword,
   ArticleCategories,
@@ -74,7 +75,7 @@ export class Jats {
     if (
       !(elements?.length === 2 && elements[0].type === 'doctype' && hasSingleArticle(elements[1]))
     ) {
-      throw new Error('Element <article> is not the only element of the JATS');
+      throw new Error('JATS must be structured as <!DOCTYPE><article>...</article>');
     }
     this.doctype = elements[0].doctype;
     const converted = convertToUnist(elements[1]);
@@ -96,7 +97,13 @@ export class Jats {
         date = `${year}-${month}-${day}`;
       }
     }
-    const authors = this.articleAuthors;
+    const authors = this.articleAuthors?.map((auth) => {
+      return processContributor(auth);
+    });
+    const affiliations = this.articleAffiliations?.map((aff) => {
+      return processAffiliation(aff);
+    });
+    const keywords = this.keywords?.map((k) => toText(k)) ?? [];
     const firstSubject = select(Tags.subject, this.articleCategories ?? this.front);
     const journalTitle = select(Tags.journalTitle, this.front);
     return {
@@ -105,8 +112,10 @@ export class Jats {
       short_title: short_title ? toText(short_title) : undefined,
       doi: this.doi ?? undefined,
       date,
-      authors: authors?.map((a) => authorAndAffiliation(a, this.tree)),
-      keywords: this.keywords?.map((k) => toText(k)),
+      authors: authors.length ? authors : undefined,
+      // editors,
+      affiliations: affiliations.length ? affiliations : undefined,
+      keywords: keywords.length ? keywords : undefined,
       venue: journalTitle ? { title: toText(journalTitle) } : undefined,
       subject: firstSubject ? toText(firstSubject) : undefined,
     };
@@ -198,7 +207,19 @@ export class Jats {
   }
 
   get articleAuthors(): Contrib[] {
-    return selectAll(Tags.contrib, this.contribGroup) as Contrib[];
+    const contribs = selectAll(Tags.contrib, {
+      type: 'contribGroups',
+      children: this.contribGroups,
+    }) as Contrib[];
+    const authors = contribs.filter((contrib) => {
+      const contribType = contrib['contrib-type'];
+      return !contribType || contribType === 'author';
+    });
+    return authors;
+  }
+
+  get articleAffiliations(): Affiliation[] {
+    return selectAll(`${Tags.aff}[id]`, this.front) as Affiliation[];
   }
 
   get body(): Body | undefined {
