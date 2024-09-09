@@ -93,7 +93,7 @@ export type ContribGroup = GenericParent & {
 
 export type Contrib = GenericParent & {
   type: Tags.contrib;
-  'content-type'?: string;
+  'contrib-type'?: string;
 };
 
 export type Affiliation = GenericParent & {
