@@ -10,7 +10,6 @@ import { select, selectAll } from 'unist-util-select';
 import { u } from 'unist-builder';
 import { RefType } from 'jats-tags';
 import { Jats } from 'jats-xml';
-import { keysTransform } from 'myst-transforms';
 import { MathMLToLaTeX } from 'mathml-to-latex';
 import { js2xml } from 'xml-js';
 import type { Handler, IJatsParser, JatsResult, Options, StateData } from './types.js';
@@ -578,11 +577,9 @@ export const jatsToMystPlugin: Plugin<[Jats, Options?], Root, Root> = function (
         referenceOrder.push(rid);
       }
     });
-    const treeFinal = state.stack[0] as Root;
-    keysTransform(treeFinal);
     const result: JatsResult = {
       references: { order: referenceOrder, data: referenceData },
-      tree: treeFinal,
+      tree: state.stack[0] as Root,
     };
     file.result = result;
     return file;
