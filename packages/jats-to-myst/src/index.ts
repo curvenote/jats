@@ -16,6 +16,7 @@ import { js2xml } from 'xml-js';
 import type { Handler, IJatsParser, JatsResult, Options, StateData } from './types.js';
 import { basicTransformations } from './transforms/index.js';
 import type { ProjectFrontmatter } from 'myst-frontmatter';
+import { abstractTransform, descriptionFromAbstract } from './transforms/abstract.js';
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
@@ -519,6 +520,7 @@ export class JatsParser implements IJatsParser {
 
 export const jatsToMystPlugin: Plugin<[Jats, Options?], Root, Root> = function (jats, opts) {
   this.Compiler = (node: GenericParent, file: VFile) => {
+    if (jats.abstract) abstractTransform(jats.abstract);
     const tree = jats.abstract
       ? {
           type: 'root',
