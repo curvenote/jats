@@ -14,9 +14,9 @@ function toTex(tree: any) {
 }
 
 describe('Basic JATS read', () => {
-  test('read', () => {
+  test('read', async () => {
     const data = fs.readFileSync('tests/00003.xml').toString();
-    const { tree } = jatsToMystTransform(data);
+    const { tree } = await jatsToMystTransform(data);
     const tex = toTex(tree);
     expect(tex.includes('LDs have antimicrobial activity')).toBe(true);
   });

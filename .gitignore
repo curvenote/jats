@@ -36,3 +36,5 @@ _build
 version.ts
 
 packages/jats-xml/**/static/
+
+.env

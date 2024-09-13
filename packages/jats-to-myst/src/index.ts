@@ -18,6 +18,7 @@ import type { Handler, IJatsParser, JatsResult, Options, StateData } from './typ
 import { basicTransformations } from './transforms/index.js';
 import type { ProjectFrontmatter } from 'myst-frontmatter';
 import { abstractTransform, descriptionFromAbstract } from './transforms/abstract.js';
+import { resolveJatsReferencesTransform } from './transforms/references.js';
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
@@ -369,29 +370,10 @@ const handlers: Record<string, Handler> = {
     const refType: RefType = node['ref-type'];
     switch (refType) {
       case RefType.bibr:
-        const reference = state.jats.references.find((ref) => ref.id === node.rid);
-        const doiElement = selectAll('ext-link,[pub-id-type=doi]', reference).find((e) => {
-          return doi.validate(toText(e));
-        });
-        const doiString = doiElement ? toText(doiElement) : undefined;
-        // biorxiv - get from string
-        // pmid - lookup by api
-        // maybe others - get from string...?
-        // others - search openalex?
-        // total fallback - make bib?
-        // if (bad && !doiString) {
-        //   // bad = false;
-        //   console.log('BAD:');
-        //   console.log(JSON.stringify(reference, null, 2));
-        //   // console.log(toText(reference).replaceAll(/[^a-zA-Z0-9]/g, ' '));
-        // } else if (good && doiString) {
-        //   good = false;
-        //   console.log('GOOD:');
-        //   console.log(JSON.stringify(reference));
-        // }
+      case RefType.ref:
         state.renderInline(node, 'cite', {
-          label: doiString ?? node.rid,
-          identifier: doiString ?? node.rid,
+          label: node.rid,
+          identifier: node.rid,
           kind: 'narrative',
         });
         return;
@@ -411,8 +393,7 @@ const handlers: Record<string, Handler> = {
     }
   },
 };
-let good = true;
-const bad = true;
+
 const DEFAULT_HANDLERS = { ...handlers };
 
 export class JatsParser implements IJatsParser {
@@ -592,29 +573,38 @@ export const jatsToMystPlugin: Plugin<[Jats, Options?], Root, Root> = function (
   };
 };
 
-export function jatsToMystTransform(
+export async function jatsToMystTransform(
   data: string | Jats,
   opts?: Options,
-): { tree: Root; jats: Jats; file: VFile; references: any; frontmatter: ProjectFrontmatter } {
+): Promise<{
+  tree: Root;
+  jats: Jats;
+  file: VFile;
+  references: any;
+  frontmatter: ProjectFrontmatter;
+}> {
   const jats = typeof data === 'string' ? new Jats(data) : data;
   const { frontmatter } = jats;
   const file = new VFile();
   const pipe = unified().use(jatsToMystPlugin, jats, opts);
-  const vfile = pipe.stringify(jats.body as any, file);
+  const vfile = pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
   const references = (vfile as any).result.references;
   const tree = (vfile as any).result.tree as Root;
-  return { tree, jats, file, references, frontmatter }; //, kind };
-}
-
-export function jatsToMyst(input: string, opts?: { frontmatter?: 'page' | 'project' }) {
-  const { tree, frontmatter } = jatsToMystTransform(fs.readFileSync(input).toString());
+  await resolveJatsReferencesTransform(tree, jats, opts?.dir ?? '.');
   const abstract = selectAll('block', tree).find((node) => {
     return node.data?.part === 'abstract';
   });
   if (abstract) {
     frontmatter.description = descriptionFromAbstract(toText(abstract));
   }
+  return { tree, jats, file, references, frontmatter }; //, kind };
+}
+
+export async function jatsToMyst(input: string, opts?: { frontmatter?: 'page' | 'project' }) {
   const dir = path.dirname(input);
+  const { tree, frontmatter } = await jatsToMystTransform(fs.readFileSync(input).toString(), {
+    dir,
+  });
   const mystJson = path.join(dir, `${path.basename(input, path.extname(input))}.myst.json`);
   const mystYml = path.join(dir, 'myst.yml');
   if (opts?.frontmatter === 'page') {
