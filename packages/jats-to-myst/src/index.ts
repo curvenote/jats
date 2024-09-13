@@ -226,6 +226,10 @@ const handlers: Record<string, Handler> = {
     });
     state.closeNode();
   },
+  graphic(node, state) {
+    const link = node?.['xlink:href'];
+    state.addLeaf('image', { url: link });
+  },
   fig(node, state) {
     const caption = select('caption', node) as GenericNode;
     const graphic = select('graphic', node) as GenericNode;
@@ -249,13 +253,20 @@ const handlers: Record<string, Handler> = {
     state.closeNode();
   },
   ['table-wrap'](node, state) {
-    const caption = (select('caption', node) ?? select('lable', node)) as GenericNode;
+    const caption = (select('caption', node) ?? select('label', node)) as GenericNode;
+    const title = select('title', node) as GenericNode;
     state.openNode('container', { label: node.id, identifier: node.id, kind: 'table' });
-    if (caption) {
-      state.openNode('caption');
-      state.renderChildren(caption);
+    state.openNode('caption');
+    if (title) {
+      state.openNode('strong');
+      state.renderChildren(title);
       state.closeNode();
     }
+    // caption number?
+    if (caption) {
+      state.renderChildren(caption);
+    }
+    state.closeNode();
     state.renderChildren(node);
     state.closeNode();
   },
