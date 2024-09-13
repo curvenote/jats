@@ -72,6 +72,10 @@ export class Jats {
     }
     const { declaration, elements } = this.raw;
     this.declaration = declaration?.attributes;
+    if (elements?.length && elements[0].type !== 'doctype') {
+      this.log?.warn('JATS is missing DOCTYPE declaration');
+      elements.unshift({ type: 'doctype' });
+    }
     if (
       !(elements?.length === 2 && elements[0].type === 'doctype' && hasSingleArticle(elements[1]))
     ) {
