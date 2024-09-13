@@ -141,7 +141,7 @@ let aiCt = 0;
  */
 export async function resolveJatsReferencesTransform(tree: GenericParent, jats: Jats, dir: string) {
   const bibfile = path.join(dir, 'main.bib');
-  const writeBibtex = fs.existsSync(bibfile);
+  const writeBibtex = !fs.existsSync(bibfile);
   const citeNodes = selectAll('cite', tree) as Cite[];
   const pmids = citeNodes
     .map((node) => {
