@@ -107,7 +107,7 @@ export function processAffiliation(aff: Affiliation): AffiliationFM {
   const addressLines = textAddress
     .map((line) => toTextAndTrim(line))
     .filter((line): line is string => !!line);
-  const department = departmentNode
+  let department = departmentNode
     ? toTextAndTrim(departmentNode)
     : addressLines.find((line) => line.toLowerCase().includes('department'));
   let address = addressNode
@@ -116,6 +116,10 @@ export function processAffiliation(aff: Affiliation): AffiliationFM {
   if (address && !institution) {
     institution = address;
     address = undefined;
+  }
+  if (department && !institution) {
+    institution = department;
+    department = undefined;
   }
   const city = toTextAndTrim(cityNode);
   const state = toTextAndTrim(stateNode);
