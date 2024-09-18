@@ -5,7 +5,7 @@ import OpenAI from 'openai';
 import { convertPMIDs2DOIs, normalizePMID } from 'jats-fetch';
 import type { Reference } from 'jats-tags';
 import { Session, type ISession, type Jats } from 'jats-xml';
-import type { GenericParent } from 'myst-common';
+import type { GenericNode, GenericParent } from 'myst-common';
 import { toText } from 'myst-common';
 import type { Cite } from 'myst-spec-ext';
 import { select, selectAll } from 'unist-util-select';
@@ -45,6 +45,7 @@ const OPENAI_INSTRUCTIONS = [
   'The user will send you one JSON reference.',
   'Translate the reference into BibTeX.',
   'The citation key must be the id of the ref element.',
+  'Source element usually has the Journal name',
   'Never surround the reference with code backticks.',
   'If you cannot translate it respond with an empty string "".',
   'If the reference contains no fields respond with an empty string "".',
@@ -151,33 +152,54 @@ export async function resolveJatsReferencesTransform(tree: GenericParent, jats: 
     })
     .filter((pmid): pmid is string => !!pmid);
   const pmidLookup = await getPMIDLookup(pmids, dir);
-  const bibtexEntries: string[] = [];
-  await Promise.all(
-    citeNodes.map(async (node) => {
-      const reference = jats.references.find((ref) => ref.id === node.identifier);
-      if (!reference) return undefined;
-      remove(reference, 'label');
-      if (!toText(reference)) return undefined;
-      const doiString = doiFromRef(new Session(), reference, pmidLookup);
-      if (doiString) {
-        node.identifier = doiString;
-        node.label = doiString;
-      } else if (writeBibtex) {
-        const bibtexEntry = await getBibtexEntry(reference, dir);
-        if (bibtexEntry) bibtexEntries.push(bibtexEntry);
-      }
-    }),
+  const bibtexLookup = Object.fromEntries(
+    (
+      await Promise.all(
+        // Loop over references async to build bibtex entry cache
+        jats.references.map(async (reference) => {
+          if (!reference.id) return;
+          remove(reference, 'label');
+          (selectAll('element-citation,mixed-citation', reference) as GenericNode[]).forEach(
+            (cit) => {
+              delete cit.id;
+            },
+          );
+          if (!toText(reference)) return undefined;
+          const doiString = doiFromRef(new Session(), reference, pmidLookup);
+          if (!doiString && writeBibtex) {
+            return [reference.id, await getBibtexEntry(reference, dir)];
+          }
+        }),
+      )
+    ).filter((entry) => !!entry),
   );
-  if (writeBibtex && bibtexEntries.length) {
-    fs.writeFileSync(bibfile, bibtexEntries.join('\n\n'));
+  doiCt = 0;
+  pmidCt = 0;
+  aiCt = 0;
+  // Loop over cite nodes to fill node content and build bibtex
+  const bibtexEntries: Set<string> = new Set();
+  citeNodes.map(async (node) => {
+    const reference = jats.references.find((ref) => ref.id === node.identifier);
+    if (!reference || !toText(reference)) return undefined;
+    const doiString = doiFromRef(new Session(), reference, pmidLookup);
+    if (doiString) {
+      node.identifier = doiString;
+      node.label = doiString;
+    } else if (bibtexLookup[reference.id]) {
+      aiCt += 1;
+      const bibtexEntry = bibtexLookup[reference.id];
+      if (writeBibtex && bibtexEntry) {
+        bibtexEntries.add(bibtexEntry);
+      }
+    }
+  });
+  if (writeBibtex && bibtexEntries.size) {
+    fs.writeFileSync(bibfile, [...bibtexEntries].join('\n\n'));
   }
   console.log('total citations', citeNodes.length);
   console.log('doi citations', doiCt);
   console.log('pmid citations', pmidCt);
   console.log('ai citations', aiCt);
   console.log('unknown', citeNodes.length - doiCt - pmidCt - aiCt);
-  doiCt = 0;
-  pmidCt = 0;
-  aiCt = 0;
   console.log('---');
 }
