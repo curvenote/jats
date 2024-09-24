@@ -1,37 +1,13 @@
 import 'dotenv/config.js';
 import fs from 'node:fs';
 import path from 'node:path';
-import OpenAI from 'openai';
+// import OpenAI from 'openai';
 import { convertPMIDs2DOIs, normalizePMID } from 'jats-fetch';
 import type { Reference } from 'jats-tags';
-import { Session, type ISession, type Jats } from 'jats-xml';
+import { Session, type Jats } from 'jats-xml';
 import type { GenericNode, GenericParent } from 'myst-common';
-import { toText } from 'myst-common';
-import type { Cite } from 'myst-spec-ext';
+import { copyNode, liftChildren, normalizeLabel, toText } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
-import { computeHash } from 'myst-cli-utils';
-import { remove } from 'unist-util-remove';
-
-/**
- * Return DOI from pub-id element of Reference object
- *
- * If DOI is directly available in the reference it is returned.
- * If PubMed ID is available on the reference, DOI is looked up from
- * the pmid cache (this must already be populated).
- * Otherwise, this function returns undefined.
- */
-export function doiFromRef(session: ISession, reference: Reference, pmids: Record<string, string>) {
-  const doiElement = select('ext-link,[pub-id-type=doi]', reference);
-  if (doiElement) doiCt += 1;
-  if (doiElement) return toText(doiElement);
-  const pmidElement = select('ext-link,[pub-id-type=pmid]', reference);
-  if (pmidElement) {
-    const pmid = normalizePMID(session, toText(pmidElement));
-    const pmDoi = pmids[pmid];
-    if (pmDoi) pmidCt += 1;
-    if (pmDoi) return pmDoi;
-  }
-}
 
 function cacheFolder(dir: string) {
   return path.join(dir, '_build', 'cache');
@@ -41,72 +17,326 @@ function pmidCacheFile(dir: string) {
   return path.join(cacheFolder(dir), 'jats-pmid-doi.json');
 }
 
-const OPENAI_INSTRUCTIONS = [
-  'The user will send you one JSON reference.',
-  'Translate the reference into BibTeX.',
-  'The citation key must be the id of the ref element.',
-  'Source element usually has the Journal name',
-  'Never surround the reference with code backticks.',
-  'If you cannot translate it respond with an empty string "".',
-  'If the reference contains no fields respond with an empty string "".',
-  'If the reference is not available respond with an empty string "".',
-].join('\n');
+type ProcessedReference = {
+  cite?: string;
+  footnote?: string;
+};
 
 /**
- * Return single bibtex entry from Reference object
- *
- * If a cached entry exists for the Reference, it is returned.
- * If an OpenAI API key is available, OpenAI is queried
- * to generate a bibtex entry, and the result is cached.
- * Otherwise, this function returns undefined.
+ * Convert "note" node into "fn" node with ID
  */
-async function getBibtexEntry(reference: Reference, dir: string) {
-  const referenceString = JSON.stringify(reference);
-  const cacheFile = path.join(cacheFolder(dir), `jats-bibtex-${computeHash(referenceString)}.bib`);
-  if (fs.existsSync(cacheFile)) {
-    aiCt += 1;
-    return fs.readFileSync(cacheFile).toString();
+function processRefNote(
+  note: GenericNode,
+  fnId: string,
+): {
+  noteId?: string;
+  ref: { footnote: string };
+  footnote: GenericNode;
+} {
+  const noteId = note.id;
+  const footnote = copyNode(note);
+  footnote.type = 'fn';
+  footnote.id = fnId;
+  return { noteId, ref: { footnote: fnId }, footnote };
+}
+
+const BIBTEX_TYPE: Record<string, string> = {
+  journal: 'article',
+  book: 'book',
+  report: 'techreport',
+  confproc: 'inproceedings',
+  other: 'misc',
+  web: 'misc',
+  webpage: 'misc',
+  miscellaneous: 'misc',
+  undeclared: 'misc',
+  preprint: 'article',
+  eprint: 'article',
+  software: 'misc',
+  data: 'misc',
+  patent: 'misc',
+  thesis: 'phdthesis',
+};
+
+function bibtexFromCite(key: string, cite: GenericNode) {
+  let entryType = BIBTEX_TYPE[cite['publication-type']] ?? 'misc';
+  if (select('part-title,chapter-title', cite)) {
+    entryType = 'inbook';
   }
-  if (!process.env.OPENAI_API_KEY) return undefined;
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+  const bibtexLines = [`@${entryType}{${key}`];
+  const authors: string[] = [];
+  const editors: string[] = [];
+  let fpage: string | undefined;
+  let lpage: string | undefined;
+  let maybeFpage: string | undefined;
+  let patentTitle = '';
+  const skipped: string[] = [];
+  cite.children?.forEach((child) => {
+    if (child.type === 'label') return;
+    if (child.type === 'pub-id') return;
+    if (
+      child.type === 'text' &&
+      toText(child).match(/^([\s.;,:\-–()&]|p|ed|eds|in|and|st|nd|rd|th)*$/i)
+    )
+      return;
+    if (child.type === 'article-title') {
+      // This would be nicer if we did JATS -> LaTeX
+      bibtexLines.push(`  title = {${toText(child)}}`);
+    } else if (child.type === 'year') {
+      bibtexLines.push(`  year = {${toText(child)}}`);
+    } else if (child.type === 'source') {
+      const field =
+        entryType === 'book' ? 'title' : entryType === 'inbook' ? 'booktitle' : 'journal';
+      bibtexLines.push(`  ${field} = {${toText(child)}}`);
+    } else if (['part-title', 'chapter-title', 'data-title'].includes(child.type)) {
+      bibtexLines.push(`  title = {${toText(child)}}`);
+    } else if (child.type === 'patent') {
+      // We need to improve this, there is critical patent info in text nodes...
+      patentTitle = `${patentTitle}${toText(child)}`;
+    } else if (child.type === 'issue') {
+      bibtexLines.push(`  number = {${toText(child)}}`);
+    } else if (child.type === 'volume') {
+      bibtexLines.push(`  volume = {${toText(child)}}`);
+    } else if (child.type === 'conf-name') {
+      bibtexLines.push(`  booktitle = {${toText(child)}}`);
+    } else if (child.type === 'institution') {
+      bibtexLines.push(`  institution = {${toText(child)}}`);
+    } else if (child.type === 'uri') {
+      bibtexLines.push(`  howpublished = {\\url{${child['xlink:href']}}}`);
+    } else if (child.type === 'date-in-citation') {
+      if (child['content-type'] === 'access-date') {
+        bibtexLines.push(`  note = {Accessed: ${toText(child)}}`);
+      } else {
+        bibtexLines.push(`  note = {${toText(child)}}`);
+      }
+    } else if (child.type === 'fpage') {
+      fpage = toText(child);
+    } else if (child.type === 'lpage') {
+      lpage = toText(child);
+    } else if (child.type === 'edition') {
+      bibtexLines.push(`  edition = {${toText(child)}}`);
+    } else if (child.type === 'publisher-name') {
+      bibtexLines.push(`  publisher = {${toText(child)}}`);
+    } else if (['publisher-loc', 'conf-loc'].includes(child.type)) {
+      bibtexLines.push(`  address = {${toText(child)}}`);
+    } else if (child.type === 'person-group') {
+      const names = selectAll('name,string-name,collab,etal', child).map((n) => {
+        if (n.type === 'etal') return 'others';
+        if (n.type === 'collab') return `{${toText(n)}}`;
+        if (!select('surname', n) || !select('given-names', n)) return `${toText(n)}`;
+        return `${toText(select('surname', n))}, ${toText(select('given-names', n))}`;
+      });
+      if (child['person-group-type'] === 'editor') {
+        editors.push(...names);
+      } else {
+        authors.push(...names);
+      }
+    } else if (['name', 'string-name'].includes(child.type)) {
+      if (!select('surname', child) || !select('given-names', child)) {
+        authors.push(`${toText(child)}`);
+      } else {
+        authors.push(
+          `${toText(select('surname', child))}, ${toText(select('given-names', child))}`,
+        );
+      }
+    } else if (child.type === 'collab') {
+      authors.push(`{${toText(child)}}`);
+    } else if (child.type === 'etal') {
+      authors.push('others');
+      // } else if (!['text', 'bold', 'italic', 'comment'].includes(child.type)) {
+    } else if (child.type === 'text') {
+      if (toText(child).match(/, [0-9]+\./)) {
+        maybeFpage = toText(child).slice(2, -1);
+      } else if (
+        cite['publication-type'] === 'patent' &&
+        toText(child).toLowerCase().includes('patent')
+      ) {
+        patentTitle = `${toText(child)}${patentTitle}`;
+      }
+    } else {
+      skipped.push(`skipped: ${child.type} @ ${key} - "${toText(child)}"`);
+      // console.log(`skipped: ${child.type} @ ${key} - "${toText(child)}"`);
+    }
   });
-  const response = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
-    messages: [
-      {
-        role: 'system',
-        content: OPENAI_INSTRUCTIONS,
-      },
-      {
-        role: 'user',
-        content: referenceString,
-      },
-    ],
-    temperature: 1,
-    max_tokens: 256,
-    top_p: 1,
-    frequency_penalty: 0,
-    presence_penalty: 0,
-  });
-  const bibtex = response.choices[0]?.message?.content ?? '';
-  fs.mkdirSync(cacheFolder(dir), { recursive: true });
-  fs.writeFileSync(cacheFile, bibtex);
-  aiCt += 1;
-  return bibtex;
+  if (patentTitle && !bibtexLines.find((line) => line.startsWith('  title = ')))
+    bibtexLines.push(`  title = {${patentTitle}}`);
+  if (maybeFpage && !fpage) fpage = maybeFpage;
+  if (fpage) {
+    bibtexLines.push(`  pages = {${fpage}${lpage ? `--${lpage}` : ''}}`);
+  }
+  if (authors.length) {
+    bibtexLines.push(`  author = {${authors.join(' and ')}}`);
+  }
+  if (editors.length) {
+    bibtexLines.push(`  editor = {${editors.join(' and ')}}`);
+  }
+  if (bibtexLines.length === 1) {
+    console.log(`This needs addressing: ${key}`);
+  } else {
+    skipped.forEach((line) => console.log(line));
+  }
+  return `${bibtexLines.join(',\n')}\n}`;
 }
 
 /**
- * Generate a DOI lookup dictionary for a list of PubMed IDs
+ * Convert citation node into DOI, PMID, or bibtex entry
+ */
+function processRefCite(
+  cite: GenericNode,
+  fallbackKey: string,
+  pmidCache: Record<string, string | null>,
+): {
+  citeId?: string;
+  ref: Omit<ProcessedReference, 'footnote'>;
+  bibtex?: string;
+} {
+  const citeId = cite.id;
+  const key = citeId ?? fallbackKey;
+  const doiElement = select('ext-link,[pub-id-type=doi]', cite);
+  if (doiElement) {
+    return { citeId, ref: { cite: `https://doi.org/${toText(doiElement)}` } };
+  }
+  const doiMatch = selectAll('text', cite)
+    .map((node) => toText(node).match(/10.[0-9]+\/\S+/))
+    .find((match) => !!match);
+  if (doiMatch) {
+    return { citeId, ref: { cite: `https://doi.org/${doiMatch[0]}` } };
+  }
+  const pmidElement = select('ext-link,[pub-id-type=pmid]', cite);
+  if (pmidElement) {
+    const pmid = normalizePMID(new Session(), toText(pmidElement));
+    if (pmidCache[pmid]) {
+      return { citeId, ref: { cite: `https://doi.org/${pmidCache[pmid]}` } };
+    }
+  }
+  const bibtex = bibtexFromCite(key, cite);
+  return { citeId, ref: { cite: key }, bibtex };
+}
+
+/**
+ * Process a single reference
+ *
+ * This reference may contain multiple citations and notes. This function
+ * compiles these into a lookup dictionary and lists of bibtex entries
+ * and footnotes
+ */
+function processRef(ref: GenericParent, pmidCache: Record<string, string | null>, fnCount: number) {
+  // if it's a ref and a citation with doi
+  // return { refid: [{ cit doi }], citid: [{ cit doi }] }
+  // if it's a ref and a citation with pmid
+  // return { refid: [{ cit pmid }], citid: [{ cit pmid }] }
+  // if it's a ref and a citation with no id
+  // return { refid: [{ cit key }], citid: [{ cit key }] }, [bibtex string]
+  // if it's a ref and a citation that's actually a footnote
+  // return { refid: [{ fn key }], citid: [{ fn key }] }, [footnote node]
+  // if it's a citation with doi/pmid
+  // return { citid: [{ cit doi/pmid }] }
+  // if it's a citation with no id or a note
+  // return { citid: [{ cit key / fn key }] }, [bibtex string / footnote node]
+  // if it's a ref with multiple note/cites
+  // return { refid: [{}, {}, {}, ...], citid: [{}], citid: [{}], ...}, [bibtex strings...], [footnote nodes...]
+  // ref with unlabeled note and other cites - ignore note
+  if (ref.type !== 'ref') {
+    throw new Error(`Unexpected type for reference: ${ref.type}`);
+  }
+  if (!ref.id) {
+    throw new Error(`Encountered "ref" without id`);
+  }
+  const refLookup: Record<string, ProcessedReference[]> = { [ref.id]: [] };
+  const footnotes: GenericNode[] = [];
+  const bibtexEntries: string[] = [];
+  ref.children?.forEach((child) => {
+    if (['element-citation', 'mixed-citation'].includes(child.type)) {
+      if (!toText(child)) return;
+      const cite = processRefCite(child, ref.id, pmidCache);
+      refLookup[ref.id].push(cite.ref);
+      if (cite.citeId) refLookup[cite.citeId] = [cite.ref];
+      if (cite.bibtex) bibtexEntries.push(cite.bibtex);
+    } else if (child.type === 'note') {
+      // Ignore notes unless they are the only child or labeled
+      // if (ref.children.length === 1 || child.children?.map((c) => c.type).includes('label')) {
+      const fn = processRefNote(child, `${fnCount + footnotes.length}`);
+      refLookup[ref.id].push(fn.ref);
+      if (fn.noteId) refLookup[fn.noteId] = [fn.ref];
+      footnotes.push(fn.footnote);
+      // } else {
+      //   console.log(`ignoring reference note: "${toText(child)}"`);
+      // }
+    } else if (child.type !== 'label') {
+      console.log(`unsupported reference item of type: ${child.type}`);
+    }
+  });
+  return { refLookup, footnotes, bibtexEntries };
+}
+
+/**
+ * This takes a jats object and creates a lookup for resolving citations
+ *
+ * The keys in the lookup are IDs that may be referenced in citations. These
+ * include both ref ids and citation ids. The values in the lookup are lists of
+ * objects with either doi, bibtex keys, or footnote key. These must be a list
+ * as some references hold multiple citations, and these must include footnotes
+ * as sometimes footnotes are in the ref list.
+ *
+ * This function also (1) writes a bibtex file if necessary and appends footnotes
+ * to the jats tree.
+ */
+export async function processJatsReferences(jats: Jats, dir: string, writeBibtex?: boolean) {
+  const bibfile = path.join(dir, 'main.bib');
+  writeBibtex = typeof writeBibtex === 'boolean' ? writeBibtex : !fs.existsSync(bibfile);
+  const refs = jats.references;
+  let refLookup: Record<string, ProcessedReference[]> = {};
+  const footnotes: GenericNode[] = [];
+  const bibtexEntries: string[] = [];
+  const pmidCache = await getPMIDLookup(refs, dir);
+  refs.forEach((ref) => {
+    const {
+      refLookup: newRefLookup,
+      footnotes: newFootnotes,
+      bibtexEntries: newBibtexEntries,
+    } = processRef(ref, pmidCache, footnotes.length + 1);
+    refLookup = { ...refLookup, ...newRefLookup };
+    bibtexEntries.push(...newBibtexEntries);
+    footnotes.push(...newFootnotes);
+  });
+  const refKeys = [...Object.keys(refLookup)];
+  refKeys.forEach((key) => {
+    if (refLookup[key].length > 0) return;
+    refKeys
+      .filter((subKey) => {
+        if (!subKey.startsWith(key)) return false;
+        return subKey.slice(key.length).match(/^[a-z]$/);
+      })
+      .forEach((subKey) => {
+        refLookup[key].push(...refLookup[subKey]);
+      });
+  });
+  if (bibtexEntries.length && writeBibtex) {
+    fs.writeFileSync(bibfile, bibtexEntries.join('\n\n'));
+  }
+  if (footnotes.length) {
+    jats.body?.children.push({ type: 'fn-group', children: footnotes });
+  }
+  return refLookup;
+}
+
+/**
+ * Generate a DOI lookup dictionary for a list of References with PubMed IDs
  *
  * This will load lookup dictionary cached on path, if available,
  * then query (and cache) NIH APIs for other PMIDs
  *
  * Returns PMID -> DOI lookup dictionary
  */
-async function getPMIDLookup(pmids: string[], dir: string) {
+async function getPMIDLookup(refs: Reference[], dir: string) {
+  const pmids = refs
+    .map((ref) => {
+      const pmidElement = select('ext-link,[pub-id-type=pmid]', ref);
+      return pmidElement ? toText(pmidElement) : undefined;
+    })
+    .filter((pmid): pmid is string => !!pmid);
   let cache = loadPMIDCache(dir);
-  const pmidsToFetch = pmids.filter((pmid) => !cache[pmid]);
+  const pmidsToFetch = pmids.filter((pmid) => cache[pmid] === undefined);
   if (pmidsToFetch.length > 0) {
     const lookup = await convertPMIDs2DOIs(new Session(), pmidsToFetch);
     cache = { ...cache, ...lookup };
@@ -115,20 +345,16 @@ async function getPMIDLookup(pmids: string[], dir: string) {
   return cache;
 }
 
-function loadPMIDCache(dir: string): Record<string, string> {
+function loadPMIDCache(dir: string): Record<string, string | null> {
   if (!fs.existsSync(pmidCacheFile(dir))) return {};
   return JSON.parse(fs.readFileSync(pmidCacheFile(dir)).toString());
 }
 
-function savePMIDCache(cache: Record<string, string>, dir: string) {
+function savePMIDCache(cache: Record<string, string | null>, dir: string) {
   fs.mkdirSync(cacheFolder(dir), { recursive: true });
   fs.writeFileSync(pmidCacheFile(dir), JSON.stringify(cache, null, 2));
   return JSON.parse(fs.readFileSync(pmidCacheFile(dir)).toString());
 }
-
-let doiCt = 0;
-let pmidCt = 0;
-let aiCt = 0;
 
 /**
  * Resolve citations and references from JATS
@@ -140,66 +366,43 @@ let aiCt = 0;
  *
  * References not associated with a 'cite' node are ignored.
  */
-export async function resolveJatsReferencesTransform(tree: GenericParent, jats: Jats, dir: string) {
-  const bibfile = path.join(dir, 'main.bib');
-  const writeBibtex = !fs.existsSync(bibfile);
-  const citeNodes = selectAll('cite', tree) as Cite[];
-  const pmids = citeNodes
-    .map((node) => {
-      const reference = jats.references.find((ref) => ref.id === node.identifier);
-      const pmidElement = select('ext-link,[pub-id-type=pmid]', reference);
-      return pmidElement ? toText(pmidElement) : undefined;
-    })
-    .filter((pmid): pmid is string => !!pmid);
-  const pmidLookup = await getPMIDLookup(pmids, dir);
-  const bibtexLookup = Object.fromEntries(
-    (
-      await Promise.all(
-        // Loop over references async to build bibtex entry cache
-        jats.references.map(async (reference) => {
-          if (!reference.id) return;
-          remove(reference, 'label');
-          (selectAll('element-citation,mixed-citation', reference) as GenericNode[]).forEach(
-            (cit) => {
-              delete cit.id;
-            },
-          );
-          if (!toText(reference)) return undefined;
-          const doiString = doiFromRef(new Session(), reference, pmidLookup);
-          if (!doiString && writeBibtex) {
-            return [reference.id, await getBibtexEntry(reference, dir)];
-          }
-        }),
-      )
-    ).filter((entry) => !!entry),
-  );
-  doiCt = 0;
-  pmidCt = 0;
-  aiCt = 0;
-  // Loop over cite nodes to fill node content and build bibtex
-  const bibtexEntries: Set<string> = new Set();
-  citeNodes.map(async (node) => {
-    const reference = jats.references.find((ref) => ref.id === node.identifier);
-    if (!reference || !toText(reference)) return undefined;
-    const doiString = doiFromRef(new Session(), reference, pmidLookup);
-    if (doiString) {
-      node.identifier = doiString;
-      node.label = doiString;
-    } else if (bibtexLookup[reference.id]) {
-      aiCt += 1;
-      const bibtexEntry = bibtexLookup[reference.id];
-      if (writeBibtex && bibtexEntry) {
-        bibtexEntries.add(bibtexEntry);
-      }
+export async function resolveJatsCitations(
+  tree: GenericParent,
+  refLookup: Record<string, ProcessedReference[]>,
+) {
+  const citeNodes = selectAll('cite', tree) as GenericNode[];
+  citeNodes.forEach((citeNode) => {
+    if (!citeNode.identifier || !refLookup[citeNode.identifier]) return;
+    const children: GenericNode[] = refLookup[citeNode.identifier]
+      .filter(({ footnote }) => !!footnote)
+      .map(({ footnote }) => {
+        const { label, identifier } = normalizeLabel(footnote) ?? {};
+        return {
+          type: 'footnoteReference',
+          label,
+          identifier,
+        };
+      });
+    const newCiteNodes = refLookup[citeNode.identifier]
+      .filter(({ cite }) => !!cite)
+      .map(({ cite }) => {
+        const { label, identifier } = normalizeLabel(cite) ?? {};
+        return {
+          type: 'cite',
+          kind: 'parenthetical',
+          label,
+          identifier,
+        };
+      });
+    if (newCiteNodes.length) {
+      children.push({
+        type: 'citeGroup',
+        kind: 'parenthetical',
+        children: newCiteNodes,
+      });
     }
+    citeNode.children = children;
+    citeNode.type = '__remove__';
   });
-  if (writeBibtex && bibtexEntries.size) {
-    fs.writeFileSync(bibfile, [...bibtexEntries].join('\n\n'));
-  }
-  console.log('total citations', citeNodes.length);
-  console.log('doi citations', doiCt);
-  console.log('pmid citations', pmidCt);
-  console.log('ai citations', aiCt);
-  console.log('unknown', citeNodes.length - doiCt - pmidCt - aiCt);
-  console.log('---');
+  liftChildren(tree, '__remove__');
 }

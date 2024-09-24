@@ -7,7 +7,7 @@ import type { Plugin } from 'unified';
 import { VFile } from 'vfile';
 import yaml from 'js-yaml';
 import type { MessageInfo, GenericNode, GenericParent } from 'myst-common';
-import { toText, copyNode, fileError, RuleId } from 'myst-common';
+import { toText, copyNode, fileError, RuleId, normalizeLabel } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { u } from 'unist-builder';
 import { RefType } from 'jats-tags';
@@ -18,7 +18,7 @@ import type { Handler, IJatsParser, JatsResult, Options, StateData } from './typ
 import { basicTransformations } from './transforms/index.js';
 import type { ProjectFrontmatter } from 'myst-frontmatter';
 import { abstractTransform, descriptionFromAbstract } from './transforms/abstract.js';
-import { resolveJatsReferencesTransform } from './transforms/references.js';
+import { processJatsReferences, resolveJatsCitations } from './transforms/references.js';
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
@@ -262,7 +262,6 @@ const handlers: Record<string, Handler> = {
       state.renderChildren(title);
       state.closeNode();
     }
-    // caption number?
     if (caption) {
       state.renderChildren(caption);
     }
@@ -377,6 +376,15 @@ const handlers: Record<string, Handler> = {
   //     state.write(`\\cite{${node.label}}`);
   //   }
   // },
+  ['fn-group'](node, state) {
+    state.renderChildren(node);
+  },
+  fn(node, state) {
+    const { label, identifier } = normalizeLabel(node.id) ?? {};
+    state.openNode('footnoteDefinition', { label, identifier });
+    state.renderChildren(node);
+    state.closeNode();
+  },
   xref(node, state) {
     const refType: RefType = node['ref-type'];
     switch (refType) {
@@ -534,7 +542,9 @@ export const jatsToMystPlugin: Plugin<[Jats, Options?], Root, Root> = function (
     const state = new JatsParser(file, jats, opts ?? { handlers });
     state.renderChildren(tree);
     while (state.stack.length > 1) state.closeNode();
-    // console.log('UNHANDLED', [...new Set(state.unhandled)].join(', '));
+    if (state.unhandled.length) {
+      console.log('UNHANDLED', [...new Set(state.unhandled)].join(', '));
+    }
     const referenceData = Object.fromEntries(
       jats.references.map((bibr) => {
         const id = bibr.id;
@@ -566,7 +576,6 @@ export const jatsToMystPlugin: Plugin<[Jats, Options?], Root, Root> = function (
     const xrefs = selectAll('xref[ref-type=bibr]', jats.body) as GenericNode[];
     xrefs.forEach((xref) => {
       const rid = xref.rid;
-      // should do a set or something to speed this up
       if (!referenceOrder.includes(rid)) {
         referenceOrder.push(rid);
       }
@@ -597,11 +606,12 @@ export async function jatsToMystTransform(
   const jats = typeof data === 'string' ? new Jats(data) : data;
   const { frontmatter } = jats;
   const file = new VFile();
+  const refLookup = await processJatsReferences(jats, opts?.dir ?? '.'); //, opts?.writeBibtex);
   const pipe = unified().use(jatsToMystPlugin, jats, opts);
   const vfile = pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
   const references = (vfile as any).result.references;
   const tree = (vfile as any).result.tree as Root;
-  await resolveJatsReferencesTransform(tree, jats, opts?.dir ?? '.');
+  resolveJatsCitations(tree, refLookup);
   const abstract = selectAll('block', tree).find((node) => {
     return node.data?.part === 'abstract';
   });

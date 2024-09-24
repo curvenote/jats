@@ -231,9 +231,9 @@ export async function convertPMIDs2DOIs(
   session: ISession,
   pmids: string[],
   opts?: ResolutionOptions,
-): Promise<Record<string, string> | undefined> {
+): Promise<Record<string, string | null> | undefined> {
   pmids = [...new Set(pmids.map((pmid) => normalizePMID(session, pmid)))];
-  const pmDois: Record<string, string> = {};
+  const pmDois: Record<string, string | null> = {};
   const toc = tic();
   const idconvResp = await (opts?.fetcher ?? defaultFetcher)(
     `${IDCONV_URL}?tool=jats-xml&format=json&ids=${pmids.join(',')}`,
@@ -258,16 +258,22 @@ export async function convertPMIDs2DOIs(
     const data = (await esummaryResp.json()) as {
       result?: Record<string, { articleids?: { idtype?: string; value?: string }[] }>;
     };
-    Object.entries(data?.result ?? {}).forEach(([pmid, record]) => {
-      const pmDoi = record.articleids?.find((articleid: { idtype?: string; value?: string }) => {
-        return articleid.idtype === 'doi';
-      })?.value;
-      if (pmDoi) pmDois[pmid] = pmDoi;
-    });
+    Object.entries(data?.result ?? {})
+      .filter(([pmid]) => pmid !== 'uids')
+      .forEach(([pmid, record]) => {
+        const pmDoi = record.articleids?.find((articleid: { idtype?: string; value?: string }) => {
+          return articleid.idtype === 'doi';
+        })?.value;
+        if (pmDoi) {
+          pmDois[pmid] = pmDoi;
+        } else {
+          pmDois[pmid] = null;
+        }
+      });
   }
   session.log.debug(
     toc(
-      `Used nih.gov to transform ${Object.keys(pmDois).length}/${
+      `Used nih.gov to transform ${Object.values(pmDois).filter((pmDoi) => !!pmDoi).length}/${
         pmids.length
       } PMIDs to PMCID in %s.`,
     ),
