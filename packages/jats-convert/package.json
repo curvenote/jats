@@ -1,9 +1,9 @@
 {
-  "name": "jats-to-myst",
-  "version": "1.0.18",
-  "description": "Read JATS and convert to MyST AST",
+  "name": "jats-convert",
+  "version": "1.0.0",
+  "description": "Read JATS and convert to MyST-spec frontmatter and AST",
   "author": "Rowan Cockett <rowan@curvenote.com>",
-  "homepage": "https://github.com/executablebooks/jats-xml/tree/main/packages/jats-to-myst",
+  "homepage": "https://github.com/curvenote/jats/tree/main/packages/jats-convert",
   "license": "MIT",
   "type": "module",
   "exports": "./dist/index.js",
@@ -20,30 +20,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/executablebooks/mystmd.git"
-  },
-  "bin": {
-    "jats-to-myst": "./dist/jats-to-myst.cjs"
+    "url": "git+https://github.com/curvenote/jats.git"
   },
   "scripts": {
     "copy:version": "echo \"const version = '\"$npm_package_version\"';\nexport default version;\" > src/version.ts",
     "clean": "rimraf dist",
-    "unlink": "npm uninstall -g jats-to-myst;",
-    "link": "npm run unlink; npm link;",
-    "dev": "npm run copy:version && npm run link && esbuild src/cli/index.ts --bundle --outfile=dist/jats-to-myst.cjs --platform=node --watch",
     "lint": "eslint \"src/**/*.ts\" -c .eslintrc.cjs --max-warnings 1",
     "lint:format": "prettier --check src/*.ts src/**/*.ts",
     "test": "npm run copy:version && vitest run",
     "test:watch": "npm run copy:version && vitest watch",
-    "build:cli": "esbuild src/cli/index.ts --bundle --outfile=dist/jats-to-myst.cjs --platform=node",
     "build:esm": "tsc",
-    "build": "npm-run-all -l clean copy:version -p build:esm build:cli"
+    "build": "npm-run-all -l clean copy:version -p build:esm"
   },
   "bugs": {
-    "url": "https://github.com/executablebooks/jats-xml/issues"
+    "url": "https://github.com/curvenote/jats/issues"
   },
   "dependencies": {
-    "commander": "^12.1.0",
     "doi-utils": "^2.0.2",
     "dotenv": "^16.4.5",
     "jats-tags": "^1.0.8",

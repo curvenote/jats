@@ -4,10 +4,8 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 import { Jats } from 'jats-xml';
 import { selectAll } from 'unist-util-select';
-import { toText, type GenericNode } from 'myst-common';
-import { jatsToMystTransform } from '../src';
-import { convertToUnist } from '../../jats-utils/dist/utils';
-import { xml2js } from 'xml-js';
+import type { GenericNode } from 'myst-common';
+import { jatsConvertTransform } from '../src';
 
 type TestFile = {
   cases: TestCase[];
@@ -31,7 +29,7 @@ function loadCases(file: string) {
 describe('JATS references to DOI', () => {
   const cases = loadCases('references.yml');
   test.each(cases.map((c): [string, TestCase] => [c.title, c]))('%s', async (_, { doi, jats }) => {
-    const loaded = await jatsToMystTransform(new Jats(jats));
+    const loaded = await jatsConvertTransform(new Jats(jats));
     const citeNodes = selectAll('cite', loaded.tree) as GenericNode[];
     expect(citeNodes.length).toEqual(1);
     expect(citeNodes[0].label).toEqual(doi);

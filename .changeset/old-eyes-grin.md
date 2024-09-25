@@ -1,5 +1,5 @@
 ---
-'jats-to-myst': patch
+'jats-convert': patch
 ---
 
 Remove keys transform

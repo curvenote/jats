@@ -1,5 +1,5 @@
 import { Command, Option } from 'commander';
-import { jatsToMyst } from '../index.js';
+import { jatsConvert } from 'jats-convert';
 
 function makeConvertCLI(program: Command) {
   const command = new Command('convert')
@@ -11,7 +11,7 @@ function makeConvertCLI(program: Command) {
         'Treat JATS frontmatter fields as page or project, or ignore if not specified',
       ).choices(['page', 'project']),
     )
-    .action(jatsToMyst);
+    .action(jatsConvert);
   return command;
 }
 

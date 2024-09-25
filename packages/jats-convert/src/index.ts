@@ -10,6 +10,7 @@ import type { MessageInfo, GenericNode, GenericParent } from 'myst-common';
 import { toText, copyNode, fileError, RuleId, normalizeLabel } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { u } from 'unist-builder';
+import type { License, LinkMixin } from 'jats-tags';
 import { RefType } from 'jats-tags';
 import { Jats } from 'jats-xml';
 import { MathMLToLaTeX } from 'mathml-to-latex';
@@ -19,6 +20,7 @@ import { basicTransformations } from './transforms/index.js';
 import type { ProjectFrontmatter } from 'myst-frontmatter';
 import { abstractTransform, descriptionFromAbstract } from './transforms/abstract.js';
 import { processJatsReferences, resolveJatsCitations } from './transforms/references.js';
+import version from './version.js';
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
@@ -146,12 +148,6 @@ const handlers: Record<string, Handler> = {
       state.renderChildren(node);
     }
   },
-  // mystRole(node, state) {
-  //   state.renderChildren(node);
-  // },
-  // mystDirective(node, state) {
-  //   state.renderChildren(node);
-  // },
   // comment() {
   //   // Do not archive comments
   // },
@@ -404,6 +400,11 @@ const handlers: Record<string, Handler> = {
         state.renderInline(node, 'crossReference', { label: node.rid, identifier: node.rid, kind });
         return;
       }
+      case RefType.fn:
+      case RefType.tableFn: {
+        state.renderInline(node, 'footnoteReference', { label: node.rid, identifier: node.rid });
+        return;
+      }
       default: {
         state.renderInline(node, 'crossReference', { identifier: node.rid });
         state.warn(`Unknown ref-type of ${refType}`, node);
@@ -442,7 +443,7 @@ export class JatsParser implements IJatsParser {
     fileError(this.file, message, {
       ...opts,
       node,
-      source: source ? `jats-to-myst:${source}` : 'jats-to-myst',
+      source: source ? `jats-convert:${source}` : 'jats-convert',
       ruleId: RuleId.jatsParses,
     });
   }
@@ -451,7 +452,7 @@ export class JatsParser implements IJatsParser {
     fileError(this.file, message, {
       ...opts,
       node,
-      source: source ? `jats-to-myst:${source}` : 'jats-to-myst',
+      source: source ? `jats-convert:${source}` : 'jats-convert',
       ruleId: RuleId.jatsParses,
     });
   }
@@ -485,7 +486,7 @@ export class JatsParser implements IJatsParser {
       } else {
         this.unhandled.push(child.type);
         fileError(this.file, `Unhandled JATS conversion for node of "${child.type}"`, {
-          source: 'myst-to-jats',
+          source: 'jats-convert',
           ruleId: RuleId.jatsParses,
         });
       }
@@ -519,7 +520,7 @@ export class JatsParser implements IJatsParser {
   }
 }
 
-export const jatsToMystPlugin: Plugin<[Jats, Options?], Root, Root> = function (jats, opts) {
+export const jatsConvertPlugin: Plugin<[Jats, Options?], Root, Root> = function (jats, opts) {
   this.Compiler = (node: GenericParent, file: VFile) => {
     if (jats.abstract) abstractTransform(jats.abstract);
     const tree = jats.abstract
@@ -543,7 +544,10 @@ export const jatsToMystPlugin: Plugin<[Jats, Options?], Root, Root> = function (
     state.renderChildren(tree);
     while (state.stack.length > 1) state.closeNode();
     if (state.unhandled.length) {
-      console.log('UNHANDLED', [...new Set(state.unhandled)].join(', '));
+      console.log('unhandled:');
+      [...new Set(state.unhandled)].forEach((unhandled) => {
+        console.log(`  - ${unhandled}`);
+      });
     }
     const referenceData = Object.fromEntries(
       jats.references.map((bibr) => {
@@ -593,7 +597,7 @@ export const jatsToMystPlugin: Plugin<[Jats, Options?], Root, Root> = function (
   };
 };
 
-export async function jatsToMystTransform(
+export async function jatsConvertTransform(
   data: string | Jats,
   opts?: Options,
 ): Promise<{
@@ -604,10 +608,28 @@ export async function jatsToMystTransform(
   frontmatter: ProjectFrontmatter;
 }> {
   const jats = typeof data === 'string' ? new Jats(data) : data;
+  console.log(`publisher: ${toText(select('publisher-name', jats.tree)) || null}`);
+  console.log(`journal: ${toText(select('journal-title', jats.tree)) || null}`);
+  console.log(`pmid: ${toText(select('article-id[pub-id-type=pmid]', jats.tree)) || null}`);
+  console.log(`pmc: ${toText(select('article-id[pub-id-type=pmc]', jats.tree)) || null}`);
+  console.log(`doi: ${toText(select('article-id[pub-id-type=doi]', jats.tree)) || null}`);
+  console.log(`year: ${toText(select('year', jats.publicationDate)) || null}`);
+  const license = select('license', jats.tree) as License | undefined;
+  let licenseString: string | null = null;
+  if (license?.['xlink:href']) {
+    licenseString = license['xlink:href'];
+  } else if (select('ali:license_ref', license)) {
+    licenseString = toText(select('ali:license_ref', license));
+  } else if (select('ext-link', license)) {
+    licenseString = (select('ext-link', license) as LinkMixin)['xlink:href'] ?? null;
+  } else if (license) {
+    licenseString = toText(license);
+  }
+  console.log(`license: ${licenseString}`);
   const { frontmatter } = jats;
   const file = new VFile();
-  const refLookup = await processJatsReferences(jats, opts?.dir ?? '.'); //, opts?.writeBibtex);
-  const pipe = unified().use(jatsToMystPlugin, jats, opts);
+  const refLookup = await processJatsReferences(jats, opts?.dir ?? '.');
+  const pipe = unified().use(jatsConvertPlugin, jats, opts);
   const vfile = pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
   const references = (vfile as any).result.references;
   const tree = (vfile as any).result.tree as Root;
@@ -618,12 +640,34 @@ export async function jatsToMystTransform(
   if (abstract) {
     frontmatter.description = descriptionFromAbstract(toText(abstract));
   }
+  console.log(`figures:`);
+  console.log(`  body: ${selectAll('fig', jats.body).length}`);
+  console.log(`  back: ${selectAll('fig', jats.back).length}`);
+  console.log(`  myst: ${selectAll('container[kind=figure]', tree).length}`);
+  console.log(`tables:`);
+  console.log(`  body: ${selectAll('table-wrap', jats.body).length}`);
+  console.log(`  back: ${selectAll('table-wrap', jats.back).length}`);
+  console.log(`  myst: ${selectAll('container[kind=table]', tree).length}`);
+  console.log(`math:`);
+  console.log(`  inline:`);
+  console.log(`    body: ${selectAll('inline-formula', jats.body).length}`);
+  console.log(`    back: ${selectAll('inline-formula', jats.back).length}`);
+  console.log(`    myst: ${selectAll('inlineMath', tree).length}`);
+  console.log(`  equations:`);
+  console.log(`    body: ${selectAll('disp-formula', jats.body).length}`);
+  console.log(`    back: ${selectAll('disp-formula', jats.back).length}`);
+  console.log(`    myst: ${selectAll('math', tree).length}`);
+  console.log(`footnotes:`);
+  console.log(`  body: ${selectAll('fn', jats.body).length}`);
+  console.log(`  back: ${selectAll('fn', jats.back).length}`);
+  console.log(`  myst: ${selectAll('footnoteDefinition', tree).length}`);
   return { tree, jats, file, references, frontmatter }; //, kind };
 }
 
-export async function jatsToMyst(input: string, opts?: { frontmatter?: 'page' | 'project' }) {
+export async function jatsConvert(input: string, opts?: { frontmatter?: 'page' | 'project' }) {
+  console.log(`jatsVersion: ${version}`);
   const dir = path.dirname(input);
-  const { tree, frontmatter } = await jatsToMystTransform(fs.readFileSync(input).toString(), {
+  const { tree, frontmatter } = await jatsConvertTransform(fs.readFileSync(input).toString(), {
     dir,
   });
   const mystJson = path.join(dir, `${path.basename(input, path.extname(input))}.myst.json`);

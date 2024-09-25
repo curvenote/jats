@@ -4,10 +4,11 @@ import path from 'node:path';
 // import OpenAI from 'openai';
 import { convertPMIDs2DOIs, normalizePMID } from 'jats-fetch';
 import type { Reference } from 'jats-tags';
-import { Session, type Jats } from 'jats-xml';
 import type { GenericNode, GenericParent } from 'myst-common';
 import { copyNode, liftChildren, normalizeLabel, toText } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
+import { Session } from 'myst-cli-utils';
+import type { Jats } from 'jats-xml';
 
 function cacheFolder(dir: string) {
   return path.join(dir, '_build', 'cache');
@@ -58,7 +59,15 @@ const BIBTEX_TYPE: Record<string, string> = {
   thesis: 'phdthesis',
 };
 
-function bibtexFromCite(key: string, cite: GenericNode) {
+type Counts = {
+  dois: number;
+  bibtex: number;
+  unprocessed: number;
+  lostRefs: string[];
+  lostRefItems: string[];
+};
+
+function bibtexFromCite(key: string, cite: GenericNode, counts: Counts) {
   let entryType = BIBTEX_TYPE[cite['publication-type']] ?? 'misc';
   if (select('part-title,chapter-title', cite)) {
     entryType = 'inbook';
@@ -171,9 +180,14 @@ function bibtexFromCite(key: string, cite: GenericNode) {
     bibtexLines.push(`  editor = {${editors.join(' and ')}}`);
   }
   if (bibtexLines.length === 1) {
-    console.log(`This needs addressing: ${key}`);
+    counts.unprocessed += 1;
+    // console.log(`This needs addressing: ${key}`);
   } else {
-    skipped.forEach((line) => console.log(line));
+    counts.bibtex += 1;
+    counts.lostRefItems.push(...skipped);
+    // skipped.forEach((line) => {
+    //   console.log(`  - "${line}"`);
+    // });
   }
   return `${bibtexLines.join(',\n')}\n}`;
 }
@@ -185,6 +199,7 @@ function processRefCite(
   cite: GenericNode,
   fallbackKey: string,
   pmidCache: Record<string, string | null>,
+  counts: Counts,
 ): {
   citeId?: string;
   ref: Omit<ProcessedReference, 'footnote'>;
@@ -194,22 +209,25 @@ function processRefCite(
   const key = citeId ?? fallbackKey;
   const doiElement = select('ext-link,[pub-id-type=doi]', cite);
   if (doiElement) {
+    counts.dois += 1;
     return { citeId, ref: { cite: `https://doi.org/${toText(doiElement)}` } };
   }
   const doiMatch = selectAll('text', cite)
     .map((node) => toText(node).match(/10.[0-9]+\/\S+/))
     .find((match) => !!match);
   if (doiMatch) {
+    counts.dois += 1;
     return { citeId, ref: { cite: `https://doi.org/${doiMatch[0]}` } };
   }
   const pmidElement = select('ext-link,[pub-id-type=pmid]', cite);
   if (pmidElement) {
     const pmid = normalizePMID(new Session(), toText(pmidElement));
     if (pmidCache[pmid]) {
+      counts.dois += 1;
       return { citeId, ref: { cite: `https://doi.org/${pmidCache[pmid]}` } };
     }
   }
-  const bibtex = bibtexFromCite(key, cite);
+  const bibtex = bibtexFromCite(key, cite, counts);
   return { citeId, ref: { cite: key }, bibtex };
 }
 
@@ -220,7 +238,12 @@ function processRefCite(
  * compiles these into a lookup dictionary and lists of bibtex entries
  * and footnotes
  */
-function processRef(ref: GenericParent, pmidCache: Record<string, string | null>, fnCount: number) {
+function processRef(
+  ref: GenericParent,
+  pmidCache: Record<string, string | null>,
+  fnCount: number,
+  counts: Counts,
+) {
   // if it's a ref and a citation with doi
   // return { refid: [{ cit doi }], citid: [{ cit doi }] }
   // if it's a ref and a citation with pmid
@@ -248,7 +271,7 @@ function processRef(ref: GenericParent, pmidCache: Record<string, string | null>
   ref.children?.forEach((child) => {
     if (['element-citation', 'mixed-citation'].includes(child.type)) {
       if (!toText(child)) return;
-      const cite = processRefCite(child, ref.id, pmidCache);
+      const cite = processRefCite(child, ref.id, pmidCache, counts);
       refLookup[ref.id].push(cite.ref);
       if (cite.citeId) refLookup[cite.citeId] = [cite.ref];
       if (cite.bibtex) bibtexEntries.push(cite.bibtex);
@@ -263,7 +286,8 @@ function processRef(ref: GenericParent, pmidCache: Record<string, string | null>
       //   console.log(`ignoring reference note: "${toText(child)}"`);
       // }
     } else if (child.type !== 'label') {
-      console.log(`unsupported reference item of type: ${child.type}`);
+      counts.lostRefs.push(child.type);
+      // console.log(`unsupported reference item of type: ${child.type}`);
     }
   });
   return { refLookup, footnotes, bibtexEntries };
@@ -289,16 +313,41 @@ export async function processJatsReferences(jats: Jats, dir: string, writeBibtex
   const footnotes: GenericNode[] = [];
   const bibtexEntries: string[] = [];
   const pmidCache = await getPMIDLookup(refs, dir);
+  const counts: Counts = {
+    dois: 0,
+    bibtex: 0,
+    unprocessed: 0,
+    lostRefs: [],
+    lostRefItems: [],
+  };
   refs.forEach((ref) => {
     const {
       refLookup: newRefLookup,
       footnotes: newFootnotes,
       bibtexEntries: newBibtexEntries,
-    } = processRef(ref, pmidCache, footnotes.length + 1);
+    } = processRef(ref, pmidCache, footnotes.length + 1, counts);
     refLookup = { ...refLookup, ...newRefLookup };
     bibtexEntries.push(...newBibtexEntries);
     footnotes.push(...newFootnotes);
   });
+  console.log('references:');
+  console.log(`  total: ${refs.length}`);
+  console.log(`  dois: ${counts.dois}`);
+  console.log(`  bibtex: ${counts.bibtex}`);
+  console.log(`  footnotes: ${footnotes.length}`);
+  console.log(`  unprocessed: ${counts.unprocessed}`);
+  if (counts.lostRefs.length) {
+    console.log(`  lostRefs:`);
+    [...new Set(counts.lostRefs)].forEach((line) => {
+      console.log(`    - ${line}`);
+    });
+  }
+  if (counts.lostRefItems.length) {
+    console.log(`  lostItems:`);
+    counts.lostRefItems.forEach((line) => {
+      console.log(`    - "${line}"`);
+    });
+  }
   const refKeys = [...Object.keys(refLookup)];
   refKeys.forEach((key) => {
     if (refLookup[key].length > 0) return;
