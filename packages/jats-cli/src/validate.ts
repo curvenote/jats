@@ -1,7 +1,6 @@
 import { Command, Option } from 'commander';
-import { clirun } from 'myst-cli-utils';
-import { getSession } from '../session.js';
-import { validateJatsAgainstDtdWrapper } from '../validate/index.js';
+import { validateJatsAgainstDtdWrapper } from 'jats-xml';
+import { clirun, getSession } from 'myst-cli-utils';
 
 function makeValidateCLI(program: Command) {
   const command = new Command('validate')

@@ -2,7 +2,9 @@
   "$schema": "https://unpkg.com/@changesets/config@2.3.0/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [["jats-xml", "jats-tags", "jats-fetch", "jats-utils", "meca"]],
+  "fixed": [
+    ["jats-cli", "jats-convert", "jats-xml", "jats-tags", "jats-fetch", "jats-utils", "meca"]
+  ],
   "linked": [],
   "access": "public",
   "baseBranch": "main",

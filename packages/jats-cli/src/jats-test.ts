@@ -6,9 +6,9 @@ import { select, selectAll } from 'unist-util-select';
 import { is } from 'unist-util-is';
 import type { GenericNode } from 'myst-common';
 import chalk from 'chalk';
-import { getSession } from '../session.js';
+import { getSession } from 'jats-xml';
 import { parseJats } from './parse.js';
-import type { ISession } from '../types.js';
+import type { ISession } from 'jats-xml';
 
 type Options = {
   cases: string;
