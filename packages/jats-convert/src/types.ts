@@ -15,6 +15,7 @@ export type MathPlugins = Required<PageFrontmatter>['math'];
 export type Options = {
   handlers?: Record<string, Handler>;
   dir?: string;
+  logInfo?: Record<string, any>;
 };
 
 export type StateData = {
