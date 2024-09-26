@@ -9,6 +9,7 @@ import { copyNode, liftChildren, normalizeLabel, toText } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { Session } from 'myst-cli-utils';
 import type { Jats } from 'jats-xml';
+import type { Options } from '../types.js';
 
 function cacheFolder(dir: string) {
   return path.join(dir, '_build', 'cache');
@@ -163,7 +164,7 @@ function bibtexFromCite(key: string, cite: GenericNode, counts: Counts) {
         patentTitle = `${toText(child)}${patentTitle}`;
       }
     } else {
-      skipped.push(`skipped: ${child.type} @ ${key} - "${toText(child)}"`);
+      skipped.push(`${key}:${child.type} -> ${toText(child)}`);
       // console.log(`skipped: ${child.type} @ ${key} - "${toText(child)}"`);
     }
   });
@@ -305,9 +306,11 @@ function processRef(
  * This function also (1) writes a bibtex file if necessary and appends footnotes
  * to the jats tree.
  */
-export async function processJatsReferences(jats: Jats, dir: string, writeBibtex?: boolean) {
+export async function processJatsReferences(jats: Jats, opts?: Options) {
+  const dir = opts?.dir ?? '.';
   const bibfile = path.join(dir, 'main.bib');
-  writeBibtex = typeof writeBibtex === 'boolean' ? writeBibtex : !fs.existsSync(bibfile);
+  // writeBibtex = typeof writeBibtex === 'boolean' ? writeBibtex : !fs.existsSync(bibfile);
+  const writeBibtex = !fs.existsSync(bibfile);
   const refs = jats.references;
   let refLookup: Record<string, ProcessedReference[]> = {};
   const footnotes: GenericNode[] = [];
@@ -330,23 +333,20 @@ export async function processJatsReferences(jats: Jats, dir: string, writeBibtex
     bibtexEntries.push(...newBibtexEntries);
     footnotes.push(...newFootnotes);
   });
-  console.log('references:');
-  console.log(`  total: ${refs.length}`);
-  console.log(`  dois: ${counts.dois}`);
-  console.log(`  bibtex: ${counts.bibtex}`);
-  console.log(`  footnotes: ${footnotes.length}`);
-  console.log(`  unprocessed: ${counts.unprocessed}`);
-  if (counts.lostRefs.length) {
-    console.log(`  lostRefs:`);
-    [...new Set(counts.lostRefs)].forEach((line) => {
-      console.log(`    - ${line}`);
-    });
-  }
-  if (counts.lostRefItems.length) {
-    console.log(`  lostItems:`);
-    counts.lostRefItems.forEach((line) => {
-      console.log(`    - "${line}"`);
-    });
+  if (opts?.logInfo) {
+    opts.logInfo.references = {
+      total: refs.length,
+      dois: counts.dois,
+      bibtex: counts.bibtex,
+      footnotes: footnotes.length,
+      unprocessed: counts.unprocessed,
+    };
+    if (counts.lostRefs.length) {
+      opts.logInfo.lostRefs = [...new Set(counts.lostRefs)];
+    }
+    if (counts.lostRefItems.length) {
+      opts.logInfo.lostItems = counts.lostRefItems;
+    }
   }
   const refKeys = [...Object.keys(refLookup)];
   refKeys.forEach((key) => {

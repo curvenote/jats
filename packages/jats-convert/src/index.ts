@@ -543,11 +543,8 @@ export const jatsConvertPlugin: Plugin<[Jats, Options?], Root, Root> = function 
     const state = new JatsParser(file, jats, opts ?? { handlers });
     state.renderChildren(tree);
     while (state.stack.length > 1) state.closeNode();
-    if (state.unhandled.length) {
-      console.log('unhandled:');
-      [...new Set(state.unhandled)].forEach((unhandled) => {
-        console.log(`  - ${unhandled}`);
-      });
+    if (state.unhandled.length && opts?.logInfo) {
+      opts.logInfo.unhandled = [...new Set(state.unhandled)];
     }
     const referenceData = Object.fromEntries(
       jats.references.map((bibr) => {
@@ -608,27 +605,29 @@ export async function jatsConvertTransform(
   frontmatter: ProjectFrontmatter;
 }> {
   const jats = typeof data === 'string' ? new Jats(data) : data;
-  console.log(`publisher: ${toText(select('publisher-name', jats.tree)) || null}`);
-  console.log(`journal: ${toText(select('journal-title', jats.tree)) || null}`);
-  console.log(`pmid: ${toText(select('article-id[pub-id-type=pmid]', jats.tree)) || null}`);
-  console.log(`pmc: ${toText(select('article-id[pub-id-type=pmc]', jats.tree)) || null}`);
-  console.log(`doi: ${toText(select('article-id[pub-id-type=doi]', jats.tree)) || null}`);
-  console.log(`year: ${toText(select('year', jats.publicationDate)) || null}`);
-  const license = select('license', jats.tree) as License | undefined;
-  let licenseString: string | null = null;
-  if (license?.['xlink:href']) {
-    licenseString = license['xlink:href'];
-  } else if (select('ali:license_ref', license)) {
-    licenseString = toText(select('ali:license_ref', license));
-  } else if (select('ext-link', license)) {
-    licenseString = (select('ext-link', license) as LinkMixin)['xlink:href'] ?? null;
-  } else if (license) {
-    licenseString = toText(license);
+  if (opts?.logInfo) {
+    opts.logInfo.publisher = toText(select('publisher-name', jats.tree)) || null;
+    opts.logInfo.journal = toText(select('journal-title', jats.tree)) || null;
+    opts.logInfo.pmid = toText(select('article-id[pub-id-type=pmid]', jats.tree)) || null;
+    opts.logInfo.pmc = toText(select('article-id[pub-id-type=pmc]', jats.tree)) || null;
+    opts.logInfo.doi = toText(select('article-id[pub-id-type=doi]', jats.tree)) || null;
+    opts.logInfo.year = toText(select('year', jats.publicationDate)) || null;
+    const license = select('license', jats.tree) as License | undefined;
+    let licenseString: string | null = null;
+    if (license?.['xlink:href']) {
+      licenseString = license['xlink:href'];
+    } else if (select('ali:license_ref', license)) {
+      licenseString = toText(select('ali:license_ref', license));
+    } else if (select('ext-link', license)) {
+      licenseString = (select('ext-link', license) as LinkMixin)['xlink:href'] ?? null;
+    } else if (license) {
+      licenseString = toText(license);
+    }
+    opts.logInfo.license = licenseString;
   }
-  console.log(`license: ${licenseString}`);
   const { frontmatter } = jats;
   const file = new VFile();
-  const refLookup = await processJatsReferences(jats, opts?.dir ?? '.');
+  const refLookup = await processJatsReferences(jats, opts);
   const pipe = unified().use(jatsConvertPlugin, jats, opts);
   const vfile = pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
   const references = (vfile as any).result.references;
@@ -640,38 +639,52 @@ export async function jatsConvertTransform(
   if (abstract) {
     frontmatter.description = descriptionFromAbstract(toText(abstract));
   }
-  console.log(`figures:`);
-  console.log(`  body: ${selectAll('fig', jats.body).length}`);
-  console.log(`  back: ${selectAll('fig', jats.back).length}`);
-  console.log(`  myst: ${selectAll('container[kind=figure]', tree).length}`);
-  console.log(`tables:`);
-  console.log(`  body: ${selectAll('table-wrap', jats.body).length}`);
-  console.log(`  back: ${selectAll('table-wrap', jats.back).length}`);
-  console.log(`  myst: ${selectAll('container[kind=table]', tree).length}`);
-  console.log(`math:`);
-  console.log(`  inline:`);
-  console.log(`    body: ${selectAll('inline-formula', jats.body).length}`);
-  console.log(`    back: ${selectAll('inline-formula', jats.back).length}`);
-  console.log(`    myst: ${selectAll('inlineMath', tree).length}`);
-  console.log(`  equations:`);
-  console.log(`    body: ${selectAll('disp-formula', jats.body).length}`);
-  console.log(`    back: ${selectAll('disp-formula', jats.back).length}`);
-  console.log(`    myst: ${selectAll('math', tree).length}`);
-  console.log(`footnotes:`);
-  console.log(`  body: ${selectAll('fn', jats.body).length}`);
-  console.log(`  back: ${selectAll('fn', jats.back).length}`);
-  console.log(`  myst: ${selectAll('footnoteDefinition', tree).length}`);
+  if (opts?.logInfo) {
+    opts.logInfo.figures = {
+      body: selectAll('fig', jats.body).length,
+      back: selectAll('fig', jats.back).length,
+      myst: selectAll('container[kind=figure]', tree).length,
+    };
+    opts.logInfo.tables = {
+      body: selectAll('table-wrap', jats.body).length,
+      back: selectAll('table-wrap', jats.back).length,
+      myst: selectAll('container[kind=table]', tree).length,
+    };
+    opts.logInfo.math = {
+      inline: {
+        body: selectAll('inline-formula', jats.body).length,
+        back: selectAll('inline-formula', jats.back).length,
+        myst: selectAll('inlineMath', tree).length,
+      },
+      equations: {
+        body: selectAll('disp-formula', jats.body).length,
+        back: selectAll('disp-formula', jats.back).length,
+        myst: selectAll('math', tree).length,
+      },
+    };
+    opts.logInfo.footnotes = {
+      body: selectAll('fn', jats.body).length,
+      back: selectAll('fn', jats.back).length,
+      myst: selectAll('footnoteDefinition', tree).length,
+    };
+  }
   return { tree, jats, file, references, frontmatter }; //, kind };
 }
 
 export async function jatsConvert(input: string, opts?: { frontmatter?: 'page' | 'project' }) {
-  console.log(`jatsVersion: ${version}`);
+  const logInfo: Record<string, any> = { jatsVersion: version };
   const dir = path.dirname(input);
   const { tree, frontmatter } = await jatsConvertTransform(fs.readFileSync(input).toString(), {
     dir,
+    logInfo,
   });
-  const mystJson = path.join(dir, `${path.basename(input, path.extname(input))}.myst.json`);
+  const basename = path.basename(input, path.extname(input));
+  const mystJson = path.join(dir, `${basename}.myst.json`);
   const mystYml = path.join(dir, 'myst.yml');
+  const logJson = path.join(dir, `${basename}.log.json`);
+  const logYml = path.join(dir, `${basename}.log.yml`);
+  fs.writeFileSync(logJson, JSON.stringify(logInfo, null, 2));
+  fs.writeFileSync(logYml, yaml.dump(logInfo));
   if (opts?.frontmatter === 'page') {
     fs.writeFileSync(mystJson, JSON.stringify({ mdast: tree, frontmatter }, null, 2));
   } else if (opts?.frontmatter === 'project') {
