@@ -616,8 +616,8 @@ export async function jatsConvertTransform(
     let licenseString: string | null = null;
     if (license?.['xlink:href']) {
       licenseString = license['xlink:href'];
-    } else if (select('ali:license_ref', license)) {
-      licenseString = toText(select('ali:license_ref', license));
+    } else if (select('[type=ali:license_ref]', license)) {
+      licenseString = toText(select('[type=ali:license_ref]', license));
     } else if (select('ext-link', license)) {
       licenseString = (select('ext-link', license) as LinkMixin)['xlink:href'] ?? null;
     } else if (license) {
