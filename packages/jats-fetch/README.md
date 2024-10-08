@@ -25,6 +25,6 @@ As of v1.0.0 this package is [ESM only](https://gist.github.com/sindresorhus/a39
 <p style="text-align: center; color: #aaa; padding-top: 50px">
   Made with love by
   <a href="https://curvenote.com" target="_blank" style="color: #aaa">
-    <img src="https://curvenote.dev/images/icon.png" style="height: 1em" /> Curvenote
+    <img src="https://cdn.curvenote.com/brand/logo-blue-icon.png" style="height: 1em" /> Curvenote
   </a>
 </p>
