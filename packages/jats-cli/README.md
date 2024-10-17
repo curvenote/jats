@@ -1,8 +1,8 @@
 # jats-cli
 
 [![jats-cli on npm](https://img.shields.io/npm/v/jats-cli.svg)](https://www.npmjs.com/package/jats-cli)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/curvenote/jats-cli/blob/main/LICENSE)
-[![CI](https://github.com/curvenote/jats-cli/workflows/CI/badge.svg)](https://github.com/curvenote/jats-cli/actions)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/curvenote/jats/blob/main/LICENSE)
+[![CI](https://github.com/curvenote/jats/workflows/CI/badge.svg)](https://github.com/curvenote/jats-cli/actions)
 
 Node CLI for working with JATS XML documents.
 
@@ -11,7 +11,7 @@ Read, write, and convert JATS XML and log summaries from the command line.
 To use from the command line, use the `-g` to create a global install, which will provide a `jats` CLI:
 
 ```
-npm install -g jats-xml
+npm install -g jats-cli
 jats -v
 ```
 
@@ -84,6 +84,6 @@ As of v1.0.0 this package is [ESM only](https://gist.github.com/sindresorhus/a39
 <p style="text-align: center; color: #aaa; padding-top: 50px">
   Made with love by
   <a href="https://curvenote.com" target="_blank" style="color: #aaa">
-    <img src="https://curvenote.dev/images/icon.png" style="height: 1em" /> Curvenote
+    <img src="https://cdn.curvenote.com/brand/logo-blue-icon.png" style="height: 1em" /> Curvenote
   </a>
 </p>
