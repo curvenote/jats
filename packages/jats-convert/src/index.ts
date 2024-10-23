@@ -20,6 +20,7 @@ import { basicTransformations } from './transforms/index.js';
 import type { ProjectFrontmatter } from 'myst-frontmatter';
 import { abstractTransform, descriptionFromAbstract } from './transforms/abstract.js';
 import { processJatsReferences, resolveJatsCitations } from './transforms/references.js';
+import { backToBodyTransform } from './transforms/footnotes.js';
 import version from './version.js';
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
@@ -120,10 +121,10 @@ const handlers: Record<string, Handler> = {
   ['list-item'](node, state) {
     state.renderInline(node, 'listItem');
   },
-  // thematicBreak() {
-  //   // The use of thematic breaks should be restricted to use inside table cells.
-  //   // https://jats.nlm.nih.gov/archiving/tag-library/1.3/element/hr.html
-  // },
+  thematicBreak(node, state) {
+    // This comes from intermediate transforms, not JATS source
+    state.addLeaf('thematicBreak');
+  },
   ['inline-formula'](node, state) {
     const texMath = texMathFromNode(node);
     if (texMath) {
@@ -628,6 +629,7 @@ export async function jatsConvertTransform(
   const { frontmatter } = jats;
   const file = new VFile();
   const refLookup = await processJatsReferences(jats, opts);
+  backToBodyTransform(jats);
   const pipe = unified().use(jatsConvertPlugin, jats, opts);
   const vfile = pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
   const references = (vfile as any).result.references;

@@ -28,6 +28,11 @@ function recurseSections(tree: GenericNode, depth = 1): void {
  * - Flatten the sections
  */
 export function sectionTransform(tree: GenericParent) {
+  tree.children
+    ?.filter((n) => n.type === 'ack')
+    ?.forEach((n) => {
+      n.type = 'sec';
+    });
   recurseSections(tree);
   const topSections = tree.children?.filter((n) => n.type === 'sec');
   topSections.forEach((sec) => {
