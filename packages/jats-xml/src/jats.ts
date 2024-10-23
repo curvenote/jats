@@ -39,6 +39,7 @@ import {
   convertToXml,
   toDate,
 } from 'jats-utils';
+import { journalTransforms } from './transforms/index.js';
 
 type Options = { log?: Logger; source?: string };
 
@@ -83,6 +84,7 @@ export class Jats {
     }
     this.doctype = elements[0].doctype;
     const converted = convertToUnist(elements[1]);
+    journalTransforms(converted);
     this.tree = select('article', converted) as GenericParent;
     this.log?.debug(toc('Parsed and converted JATS to unist tree in %s'));
   }
