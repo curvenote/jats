@@ -11,6 +11,12 @@ function makeConvertCLI(program: Command) {
         'Treat JATS frontmatter fields as page or project, or ignore if not specified',
       ).choices(['page', 'project']),
     )
+    .addOption(
+      new Option(
+        '--no-dois',
+        'By default, DOIs are used for references when available, to be later resolved against doi.org. This option disables that behavior and creates bibtex entries for citations with DOIs.',
+      ),
+    )
     .action(jatsConvert);
   return command;
 }

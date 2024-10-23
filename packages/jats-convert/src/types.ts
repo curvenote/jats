@@ -16,6 +16,8 @@ export type Options = {
   handlers?: Record<string, Handler>;
   dir?: string;
   logInfo?: Record<string, any>;
+  // If true, this will leave citations with DOIs to be resolved later
+  dois?: boolean;
 };
 
 export type StateData = {

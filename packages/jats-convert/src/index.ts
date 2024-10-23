@@ -673,12 +673,16 @@ export async function jatsConvertTransform(
   return { tree, jats, file, references, frontmatter }; //, kind };
 }
 
-export async function jatsConvert(input: string, opts?: { frontmatter?: 'page' | 'project' }) {
+export async function jatsConvert(
+  input: string,
+  opts?: { frontmatter?: 'page' | 'project'; dois?: boolean },
+) {
   const logInfo: Record<string, any> = { jatsVersion: version };
   const dir = path.dirname(input);
   const { tree, frontmatter } = await jatsConvertTransform(fs.readFileSync(input).toString(), {
     dir,
     logInfo,
+    dois: opts?.dois,
   });
   const basename = path.basename(input, path.extname(input));
   const mystJson = path.join(dir, `${basename}.myst.json`);
