@@ -28,6 +28,7 @@ import type {
   Keyword,
   ArticleCategories,
   ArticleMeta,
+  LinkMixin,
 } from 'jats-tags';
 import type { Logger } from 'myst-cli-utils';
 import { tic } from 'myst-cli-utils';
@@ -89,7 +90,7 @@ export class Jats {
     this.log?.debug(toc('Parsed and converted JATS to unist tree in %s'));
   }
 
-  get frontmatter(): PageFrontmatter {
+  get frontmatter(): Omit<PageFrontmatter, 'license'> & { license?: string } {
     const title = this.articleTitle;
     const subtitle = this.articleSubtitle;
     const short_title = this.articleAltTitle;
@@ -112,6 +113,18 @@ export class Jats {
     const keywords = this.keywords?.map((k) => toText(k)) ?? [];
     const firstSubject = select(Tags.subject, this.articleCategories ?? this.front);
     const journalTitle = select(Tags.journalTitle, this.front);
+    const license = this.license;
+    let licenseString: string | null = null;
+    if (license?.['xlink:href']) {
+      licenseString = license['xlink:href'];
+    } else if (select('[type=ali:license_ref]', license)) {
+      licenseString = toText(select('[type=ali:license_ref]', license));
+    } else if (selectAll('ext-link', license).length === 1) {
+      // this should only happen if there is only one ext-link
+      licenseString = (select('ext-link', license) as LinkMixin)['xlink:href'] ?? null;
+    } else if (license) {
+      licenseString = toText(license);
+    }
     return {
       title: title ? toText(title) : undefined,
       subtitle: subtitle ? toText(subtitle) : undefined,
@@ -124,6 +137,7 @@ export class Jats {
       keywords: keywords.length ? keywords : undefined,
       venue: journalTitle ? { title: toText(journalTitle) } : undefined,
       subject: firstSubject ? toText(firstSubject) : undefined,
+      license: licenseString ?? undefined,
     };
   }
 

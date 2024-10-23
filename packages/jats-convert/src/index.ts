@@ -603,7 +603,7 @@ export async function jatsConvertTransform(
   jats: Jats;
   file: VFile;
   references: any;
-  frontmatter: ProjectFrontmatter;
+  frontmatter: Omit<ProjectFrontmatter, 'license'> & { license?: string };
 }> {
   const jats = typeof data === 'string' ? new Jats(data) : data;
   if (opts?.logInfo) {
@@ -619,7 +619,7 @@ export async function jatsConvertTransform(
       licenseString = license['xlink:href'];
     } else if (select('[type=ali:license_ref]', license)) {
       licenseString = toText(select('[type=ali:license_ref]', license));
-    } else if (select('ext-link', license)) {
+    } else if (selectAll('ext-link', license).length === 1) {
       licenseString = (select('ext-link', license) as LinkMixin)['xlink:href'] ?? null;
     } else if (license) {
       licenseString = toText(license);
