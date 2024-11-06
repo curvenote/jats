@@ -6,13 +6,6 @@ export function isBioRxiv(tree?: GenericNode) {
   return toText(journalId) === 'biorxiv';
 }
 
-export function citationToMixedCitation(tree?: GenericNode) {
-  if (!isBioRxiv(tree)) return;
-  selectAll('citation', tree).forEach((node) => {
-    node.type = 'mixed-citation';
-  });
-}
-
 export function graphicToBioRxivUrl(tree?: GenericNode) {
   if (!isBioRxiv(tree)) return;
   console.log('inside graphics transform');
