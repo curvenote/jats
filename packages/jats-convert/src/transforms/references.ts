@@ -5,11 +5,12 @@ import path from 'node:path';
 import { convertPMIDs2DOIs, normalizePMID } from 'jats-fetch';
 import type { Reference } from 'jats-tags';
 import type { GenericNode, GenericParent } from 'myst-common';
-import { copyNode, liftChildren, normalizeLabel, toText } from 'myst-common';
+import { copyNode, liftChildren, normalizeLabel } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { Session } from 'myst-cli-utils';
 import type { Jats } from 'jats-xml';
 import type { Options } from '../types.js';
+import { toText } from '../utils.js';
 
 function cacheFolder(dir: string) {
   return path.join(dir, '_build', 'cache');
@@ -229,8 +230,9 @@ function processRefCite(
     const pmidElement = select('ext-link,[pub-id-type=pmid]', cite);
     if (pmidElement) {
       const pmid = normalizePMID(new Session(), toText(pmidElement));
-      if (pmidCache[pmid]) {
-        doi = pmidCache[pmid];
+      const cachedDoi = pmidCache[pmid];
+      if (cachedDoi) {
+        doi = cachedDoi;
       }
     }
   }
@@ -417,14 +419,10 @@ function savePMIDCache(cache: Record<string, string | null>, dir: string) {
 }
 
 /**
- * Resolve citations and references from JATS
- *
- * This function iterates over all the 'cite' nodes and resolves the corresponding reference.
- * It prioritizes DOIs, updating the cite nodes with those if available and discarding
- * any additional info contained in the Reference. If it cannot determine the DOI, it
- * uses OpenAI to generate a bibtex entry from the Reference.
- *
- * References not associated with a 'cite' node are ignored.
+ * Resolve cite nodes using reference lookup
+ * 
+ * Cite node may be converted to citeGroup or footnoteReference, depending
+ * on the content in the reference lookup dictionary
  */
 export async function resolveJatsCitations(
   tree: GenericParent,

@@ -7,7 +7,7 @@ import type { Plugin } from 'unified';
 import { VFile } from 'vfile';
 import yaml from 'js-yaml';
 import type { MessageInfo, GenericNode, GenericParent } from 'myst-common';
-import { toText, copyNode, fileError, RuleId, normalizeLabel } from 'myst-common';
+import { copyNode, fileError, RuleId, normalizeLabel } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { u } from 'unist-builder';
 import type { License, LinkMixin } from 'jats-tags';
@@ -22,6 +22,8 @@ import { abstractTransform, descriptionFromAbstract } from './transforms/abstrac
 import { processJatsReferences, resolveJatsCitations } from './transforms/references.js';
 import { backToBodyTransform } from './transforms/footnotes.js';
 import version from './version.js';
+import { toText } from './utils.js';
+import { inlineCitationsTransform } from './myst/inlineCitations.js';
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
@@ -635,8 +637,9 @@ export async function jatsConvertTransform(
   const references = (vfile as any).result.references;
   const tree = (vfile as any).result.tree as Root;
   resolveJatsCitations(tree, refLookup);
+  inlineCitationsTransform(tree);
   const abstract = selectAll('block', tree).find((node) => {
-    return node.data?.part === 'abstract';
+    return node.data && (node.data as any).part === 'abstract';
   });
   if (abstract) {
     frontmatter.description = descriptionFromAbstract(toText(abstract));
