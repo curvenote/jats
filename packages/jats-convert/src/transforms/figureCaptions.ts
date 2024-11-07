@@ -1,10 +1,10 @@
 import type { Plugin } from 'unified';
 import type { Heading } from 'myst-spec';
 import type { GenericParent } from 'myst-common';
-import { copyNode } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { remove } from 'unist-util-remove';
 import { Tags } from 'jats-tags';
+import { copyNode } from '../utils.js';
 
 export type Section = Omit<Heading, 'type'> & { type: 'section' };
 

@@ -39,7 +39,6 @@ function allCitesToCiteGroups(tree: GenericParent) {
  */
 function flattenNestedCiteGroups(tree: GenericParent) {
   const nestedCiteGroups = selectAll('citeGroup > citeGroup', tree) as Cite[];
-  console.log(JSON.stringify(nestedCiteGroups, null, 2));
   nestedCiteGroups.forEach((node: any) => {
     node.type = '__lift__';
   });
