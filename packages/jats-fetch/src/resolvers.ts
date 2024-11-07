@@ -25,7 +25,7 @@ export const joss: Resolver = {
     return new URL(url).hostname === 'joss.theoj.org' && doi.validate(url);
   },
   jatsUrl(url: string) {
-    // Probably a better way to do this, the joss papers on on github!
+    // Probably a better way to do this, the joss papers are on github!
     const doiString = doi.normalize(url) as string;
     const [org, jossId] = doiString.split('/');
     const id = jossId.split('.')[1];

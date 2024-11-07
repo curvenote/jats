@@ -16,3 +16,5 @@ export type ResolutionOptions = {
     Pick<Response, 'ok' | 'headers' | 'text' | 'json' | 'status' | 'statusText' | 'url'>
   >;
 };
+
+export type DownloadResult = { success: boolean; source: string; data?: string };

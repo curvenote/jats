@@ -1,8 +1,7 @@
 import { Command } from 'commander';
 import fs from 'fs';
-import { extname } from 'path';
 import type { ISession } from 'myst-cli-utils';
-import { clirun, getSession, isUrl, tic, writeFileToFolder } from 'myst-cli-utils';
+import { clirun, getSession, tic } from 'myst-cli-utils';
 import { doi } from 'doi-utils';
 import chalk from 'chalk';
 import { formatPrinciples, highlightFAIR } from 'fair-principles';
@@ -12,38 +11,6 @@ import { toText } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { downloadJatsFromUrl, DEFAULT_RESOLVERS, type ResolutionOptions } from 'jats-fetch';
 import { Jats, findArticleId } from 'jats-xml';
-
-function hasValidExtension(output: string) {
-  return ['.xml', '.jats'].includes(extname(output).toLowerCase());
-}
-
-async function downloadAndSaveJats(
-  session: ISession,
-  urlOrDoi: string,
-  output: string,
-  opts: ResolutionOptions = { resolvers: DEFAULT_RESOLVERS },
-): Promise<string> {
-  if (fs.existsSync(urlOrDoi)) {
-    throw new Error(`File "${urlOrDoi}" is local and cannot be downloaded!`);
-  }
-  if (!(doi.validate(urlOrDoi) || isUrl(urlOrDoi))) {
-    throw new Error(`Path must be a URL or DOI, not "${urlOrDoi}"`);
-  }
-  if (!hasValidExtension(output)) {
-    session.log.warn(
-      `The extension ${extname(
-        output,
-      )} is not a valid extension for JATS, try using ".xml" or ".jats"`,
-    );
-  }
-  const { success, data, source } = await downloadJatsFromUrl(session, urlOrDoi, opts);
-  if (!success || !data) {
-    logAboutJatsFailing(session, [source]);
-    process.exit(1);
-  }
-  writeFileToFolder(output, data);
-  return data;
-}
 
 function logAboutJatsFailing(session: ISession, jatsUrls: string[]) {
   session.log.warn(
@@ -223,17 +190,7 @@ function makeReferencesCLI(program: Command) {
   return command;
 }
 
-function makeDownloadCLI(program: Command) {
-  const command = new Command('download')
-    .description('Parse a JATS file and provide a summary')
-    .argument('<url>', 'The JATS url or a DOI')
-    .argument('<output>', 'The JATS output file')
-    .action(clirun(downloadAndSaveJats, { program, getSession }));
-  return command;
-}
-
-export function addDownloadCLI(program: Command) {
-  program.addCommand(makeDownloadCLI(program));
+export function addParseCLI(program: Command) {
   program.addCommand(makeSummaryCLI(program));
   program.addCommand(makeReferencesCLI(program));
 }
