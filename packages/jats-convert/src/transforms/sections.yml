@@ -1,0 +1,181 @@
+cases:
+  - title: Section title becomes heading with depth
+    before:
+      type: root
+      children:
+        - type: sec
+          children:
+            - type: title
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content
+    after:
+      type: root
+      children:
+        - type: block
+          children:
+            - type: heading
+              depth: 1
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content
+  - title: Section without title remains
+    before:
+      type: root
+      children:
+        - type: sec
+          children:
+            - type: text
+              value: My content
+    after:
+      type: root
+      children:
+        - type: block
+          children:
+            - type: text
+              value: My content
+  - title: Nested sections flatten
+    before:
+      type: root
+      children:
+        - type: sec
+          children:
+            - type: title
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content
+            - type: sec
+              children:
+                - type: title
+                  children:
+                    - type: text
+                      value: My Subtitle
+                - type: sec
+                  children:
+                    - type: title
+                      children:
+                        - type: text
+                          value: Another Title
+    after:
+      type: root
+      children:
+        - type: block
+          children:
+            - type: heading
+              depth: 1
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content
+            - type: heading
+              depth: 2
+              children:
+                - type: text
+                  value: My Subtitle
+            - type: heading
+              depth: 3
+              children:
+                - type: text
+                  value: Another Title
+  - title: TitleType strong is respected
+    titleType: strong
+    before:
+      type: root
+      children:
+        - type: sec
+          children:
+            - type: title
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content
+    after:
+      type: root
+      children:
+        - type: block
+          children:
+            - type: p
+              children:
+                - type: bold
+                  children:
+                    - type: text
+                      value: My Title
+            - type: text
+              value: My content
+  - title: Ack is treated as section
+    before:
+      type: root
+      children:
+        - type: sec
+          children:
+            - type: title
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content
+        - type: ack
+          children:
+            - type: title
+              children:
+                - type: text
+                  value: Acknowledgments
+            - type: text
+              value: My acknowledgments
+    after:
+      type: root
+      children:
+        - type: block
+          children:
+            - type: heading
+              depth: 1
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content
+        - type: block
+          children:
+            - type: heading
+              depth: 1
+              children:
+                - type: text
+                  value: Acknowledgments
+            - type: text
+              value: My acknowledgments
+  - title: Label before title is ignored
+    before:
+      type: root
+      children:
+        - type: sec
+          children:
+            - type: label
+              children:
+                - type: text
+                  value: '1.1.'
+            - type: title
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content
+    after:
+      type: root
+      children:
+        - type: block
+          children:
+            - type: heading
+              depth: 1
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content

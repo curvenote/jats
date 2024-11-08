@@ -4,18 +4,31 @@ import type { GenericNode, GenericParent } from 'myst-common';
 import { liftChildren } from 'myst-common';
 import { blockNestingTransform } from 'myst-transforms';
 import { select } from 'unist-util-select';
+import { remove } from 'unist-util-remove';
 
 export type Section = Omit<Heading, 'type'> & { type: 'section' };
 
-function recurseSections(tree: GenericNode, depth = 1): void {
+function recurseSections(tree: GenericNode, depth = 1, titleType?: 'heading' | 'strong'): void {
   const sections = tree.children?.filter((n) => n.type === 'sec');
   if (!sections || sections.length === 0) return;
   sections.forEach((sec) => {
-    if (sec.children?.[0]?.type !== 'title') return;
-    sec.children[0].type = 'heading';
-    sec.children[0].id = sec.id;
-    sec.children[0].depth = depth;
-    recurseSections(sec, depth + 1);
+    let firstChild = sec.children?.[0];
+    // Section labels are ignored
+    if (firstChild?.type === 'label') {
+      firstChild.type = '__delete__';
+      firstChild = sec.children?.[1];
+    }
+    if (firstChild?.type === 'title') {
+      if (titleType === 'strong') {
+        firstChild.type = 'p';
+        firstChild.children = [{ type: 'bold', children: firstChild.children }];
+      } else {
+        firstChild.type = 'heading';
+        firstChild.id = sec.id;
+        firstChild.depth = depth;
+      }
+    }
+    recurseSections(sec, depth + 1, titleType);
   });
 }
 
@@ -27,13 +40,14 @@ function recurseSections(tree: GenericNode, depth = 1): void {
  * - Give headings depth value based on nesting
  * - Flatten the sections
  */
-export function sectionTransform(tree: GenericParent) {
+export function sectionTransform(tree: GenericParent, titleType?: 'heading' | 'strong') {
   tree.children
     ?.filter((n) => n.type === 'ack')
     ?.forEach((n) => {
       n.type = 'sec';
     });
-  recurseSections(tree);
+  recurseSections(tree, 1, titleType);
+  remove(tree, '__delete__');
   const topSections = tree.children?.filter((n) => n.type === 'sec');
   topSections.forEach((sec) => {
     sec.type = 'block';

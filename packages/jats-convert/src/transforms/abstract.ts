@@ -1,12 +1,14 @@
 import type { GenericParent } from 'myst-common';
 import { toText } from 'myst-common';
 import { remove } from 'unist-util-remove';
+import { sectionTransform } from './sections.js';
 
 export function abstractTransform(tree: GenericParent) {
   if (tree.children?.length === 1 && tree.children[0].type === 'sec') {
     abstractTransform(tree.children[0] as GenericParent);
     return;
   }
+  sectionTransform(tree, 'strong');
   const title = tree.children?.[0] as GenericParent | undefined;
   if (title?.type !== 'title') return;
   const nextNode = tree.children[1] as GenericParent | undefined;

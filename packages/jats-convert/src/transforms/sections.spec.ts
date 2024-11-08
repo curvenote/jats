@@ -1,188 +1,33 @@
 import { describe, expect, test } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import yaml from 'js-yaml';
+import { copyNode, type GenericParent } from 'myst-common';
 import { sectionTransform } from './sections';
 
-describe('sectionTransform', () => {
-  test('section title becomes heading with depth', () => {
-    const tree = {
-      type: 'root',
-      children: [
-        {
-          type: 'sec',
-          children: [
-            {
-              type: 'title',
-              children: [
-                {
-                  type: 'text',
-                  value: 'My Title',
-                },
-              ],
-            },
-            {
-              type: 'text',
-              value: 'My content',
-            },
-          ],
-        },
-      ],
-    };
-    const result = {
-      type: 'root',
-      children: [
-        {
-          type: 'block',
-          children: [
-            {
-              type: 'heading',
-              depth: 1,
-              children: [
-                {
-                  type: 'text',
-                  value: 'My Title',
-                },
-              ],
-            },
-            {
-              type: 'text',
-              value: 'My content',
-            },
-          ],
-        },
-      ],
-    };
-    sectionTransform(tree);
-    expect(tree).toEqual(result);
-  });
-  test('section without title remains', () => {
-    const tree = {
-      type: 'root',
-      children: [
-        {
-          type: 'sec',
-          children: [
-            {
-              type: 'text',
-              value: 'My content',
-            },
-          ],
-        },
-      ],
-    };
-    const result = {
-      type: 'root',
-      children: [
-        {
-          type: 'block',
-          children: [
-            {
-              type: 'text',
-              value: 'My content',
-            },
-          ],
-        },
-      ],
-    };
-    sectionTransform(tree);
-    expect(tree).toEqual(result);
-  });
-  test('nested sections flatten', () => {
-    const tree = {
-      type: 'root',
-      children: [
-        {
-          type: 'sec',
-          children: [
-            {
-              type: 'title',
-              children: [
-                {
-                  type: 'text',
-                  value: 'My Title',
-                },
-              ],
-            },
-            {
-              type: 'text',
-              value: 'My content',
-            },
-            {
-              type: 'sec',
-              children: [
-                {
-                  type: 'title',
-                  children: [
-                    {
-                      type: 'text',
-                      value: 'My Subitle',
-                    },
-                  ],
-                },
-                {
-                  type: 'sec',
-                  children: [
-                    {
-                      type: 'title',
-                      children: [
-                        {
-                          type: 'text',
-                          value: 'Another title',
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-    const result = {
-      type: 'root',
-      children: [
-        {
-          type: 'block',
-          children: [
-            {
-              type: 'heading',
-              depth: 1,
-              children: [
-                {
-                  type: 'text',
-                  value: 'My Title',
-                },
-              ],
-            },
-            {
-              type: 'text',
-              value: 'My content',
-            },
+type TestFile = {
+  cases: TestCase[];
+};
+type TestCase = {
+  title: string;
+  before: GenericParent;
+  after?: GenericParent;
+  titleType?: string;
+};
 
-            {
-              type: 'heading',
-              depth: 2,
-              children: [
-                {
-                  type: 'text',
-                  value: 'My Subitle',
-                },
-              ],
-            },
-            {
-              type: 'heading',
-              depth: 3,
-              children: [
-                {
-                  type: 'text',
-                  value: 'Another title',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-    sectionTransform(tree);
-    expect(tree).toEqual(result);
-  });
+function loadCases(file: string) {
+  const testYaml = fs.readFileSync(path.join(__dirname, file)).toString();
+  return (yaml.load(testYaml) as TestFile).cases;
+}
+
+describe('Section title transforms', () => {
+  const cases = loadCases('sections.yml');
+  test.each(cases.map((c): [string, TestCase] => [c.title, c]))(
+    '%s',
+    async (_, { before, after, titleType }) => {
+      if (!after) after = copyNode(before);
+      sectionTransform(before, titleType as any);
+      expect(before).toEqual(after);
+    },
+  );
 });
