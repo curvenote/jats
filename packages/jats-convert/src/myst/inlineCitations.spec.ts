@@ -19,13 +19,20 @@ function loadCases(file: string) {
   return (yaml.load(testYaml) as TestFile).cases;
 }
 
-describe('JATS references to DOI', () => {
+describe('Inline citation formatting', () => {
   const cases = loadCases('inlineCitations.yml');
   test.each(cases.map((c): [string, TestCase] => [c.title, c]))(
     '%s',
     async (_, { before, after }) => {
       if (!after) after = copyNode(before);
-      inlineCitationsTransform(before);
+      inlineCitationsTransform(before, [
+        'example_2019',
+        'example_2020',
+        'example_2021',
+        'example_2022',
+        'example_2023',
+        'example_2024',
+      ]);
       expect(before).toEqual(after);
     },
   );

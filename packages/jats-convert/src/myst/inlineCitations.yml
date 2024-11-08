@@ -1,5 +1,5 @@
 cases:
-  - title: Inline cite converts to citeGroup
+  - title: Inline cite converts to citeGroup and children removed
     before:
       type: root
       children:
@@ -28,9 +28,6 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2020
   - title: Inline citeGroup passes
     before:
       type: root
@@ -46,16 +43,10 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: parenthetical
-                  children:
-                    - type: text
-                      value: Example, 2020
                 - type: cite
                   label: example_2021
                   identifier: example_2021
                   kind: parenthetical
-                  children:
-                    - type: text
-                      value: Example, 2021
   - title: Nested citeGroups are flattened
     before:
       type: root
@@ -98,16 +89,10 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: parenthetical
-                  children:
-                    - type: text
-                      value: Example, 2020
                 - type: cite
                   label: example_2021
                   identifier: example_2021
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2021
   - title: Doubly nested citeGroups are flattened
     before:
       type: root
@@ -153,16 +138,10 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: parenthetical
-                  children:
-                    - type: text
-                      value: Example, 2020
                 - type: cite
                   label: example_2021
                   identifier: example_2021
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2021
   - title: Adjacent citeGroups combine
     before:
       type: root
@@ -175,9 +154,6 @@ cases:
               label: example_2020
               identifier: example_2020
               kind: narrative
-              children:
-                - type: text
-                  value: Example, 2020
             - type: citeGroup
               kind: narrative
               children:
@@ -185,9 +161,6 @@ cases:
                   label: example_2021
                   identifier: example_2021
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2021
             - type: citeGroup
               kind: parenthetical
               children:
@@ -195,9 +168,6 @@ cases:
                   label: example_2022
                   identifier: example_2022
                   kind: parenthetical
-                  children:
-                    - type: text
-                      value: Example, 2022
     after:
       type: root
       children:
@@ -212,24 +182,15 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2020
                 - type: cite
                   label: example_2021
                   identifier: example_2021
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2021
                 - type: cite
                   label: example_2022
                   identifier: example_2022
                   kind: parenthetical
-                  children:
-                    - type: text
-                      value: Example, 2022
-  - title: Comma between cites converts to citegroup
+  - title: Comma between cites converts to citeGroup
     before:
       type: root
       children:
@@ -241,18 +202,12 @@ cases:
               label: example_2020
               identifier: example_2020
               kind: narrative
-              children:
-                - type: text
-                  value: Example, 2020
             - type: text
               value: ','
             - type: cite
               label: example_2021
               identifier: example_2021
               kind: narrative
-              children:
-                - type: text
-                  value: Example, 2021
     after:
       type: root
       children:
@@ -267,16 +222,10 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2020
                 - type: cite
                   label: example_2021
                   identifier: example_2021
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2021
   - title: Comma between cites converts to citeGroup, ignore whitespace
     before:
       type: root
@@ -289,18 +238,12 @@ cases:
               label: example_2020
               identifier: example_2020
               kind: parenthetical
-              children:
-                - type: text
-                  value: Example, 2020
             - type: text
               value: ' , '
             - type: cite
               label: example_2021
               identifier: example_2021
               kind: narrative
-              children:
-                - type: text
-                  value: Example, 2021
     after:
       type: root
       children:
@@ -315,17 +258,11 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: parenthetical
-                  children:
-                    - type: text
-                      value: Example, 2020
                 - type: cite
                   label: example_2021
                   identifier: example_2021
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2021
-  - title: Semicolon between cites converts to citegroup
+  - title: Semicolon between cites converts to citeGroup
     before:
       type: root
       children:
@@ -337,9 +274,6 @@ cases:
               label: example_2020
               identifier: example_2020
               kind: narrative
-              children:
-                - type: text
-                  value: Example, 2020
             - type: text
               value: '; '
             - type: citeGroup
@@ -349,9 +283,6 @@ cases:
                   label: example_2021
                   identifier: example_2021
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2021
     after:
       type: root
       children:
@@ -366,16 +297,88 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2020
                 - type: cite
                   label: example_2021
                   identifier: example_2021
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2021
+  - title: Comma/and between cites converts to citeGroup
+    before:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citation: '
+            - type: cite
+              label: example_2020
+              identifier: example_2020
+              kind: narrative
+            - type: text
+              value: ', and '
+            - type: citeGroup
+              kind: narrative
+              children:
+                - type: cite
+                  label: example_2021
+                  identifier: example_2021
+                  kind: narrative
+    after:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citation: '
+            - type: citeGroup
+              kind: narrative
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: narrative
+                - type: cite
+                  label: example_2021
+                  identifier: example_2021
+                  kind: narrative
+  - title: And between cites converts to citeGroup
+    before:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citation: '
+            - type: cite
+              label: example_2020
+              identifier: example_2020
+              kind: narrative
+            - type: text
+              value: ' and '
+            - type: citeGroup
+              kind: narrative
+              children:
+                - type: cite
+                  label: example_2021
+                  identifier: example_2021
+                  kind: narrative
+    after:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citation: '
+            - type: citeGroup
+              kind: narrative
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: narrative
+                - type: cite
+                  label: example_2021
+                  identifier: example_2021
+                  kind: narrative
   - title: Period between citeGroups is unchanged
     before:
       type: root
@@ -391,9 +394,6 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2020
             - type: text
               value: '.'
             - type: citeGroup
@@ -403,9 +403,6 @@ cases:
                   label: example_2021
                   identifier: example_2021
                   kind: narrative
-                  children:
-                    - type: text
-                      value: Example, 2021
   - title: Parentheses around citeGroup are removed
     before:
       type: root
@@ -437,9 +434,6 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: parenthetical
-                  children:
-                    - type: text
-                      value: Example, 2020
             - type: text
               value: '.'
   - title: Parentheses around citeGroup are deleted if no other text
@@ -456,9 +450,6 @@ cases:
               label: example_2020
               identifier: example_2020
               kind: narrative
-              children:
-                - type: text
-                  value: Example, 2020
             - type: text
               value: ')'
     after:
@@ -475,6 +466,197 @@ cases:
                   label: example_2020
                   identifier: example_2020
                   kind: parenthetical
+  - title: Square brackets around citeGroup are removed
+    before:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citation: ['
+            - type: cite
+              label: example_2020
+              identifier: example_2020
+              kind: narrative
+            - type: text
+              value: '].'
+    after:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citation: '
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: parenthetical
+            - type: text
+              value: '.'
+  - title: Mismatched brackets around citeGroup are not removed
+    before:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citation: ['
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: parenthetical
+            - type: text
+              value: ').'
+  - title: citeGroup structures that require multiple passes resolve
+    before:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citation: ('
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: parenthetical
                   children:
                     - type: text
                       value: Example, 2020
+            - type: text
+              value: '; '
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2021
+                  identifier: example_2021
+                  kind: parenthetical
+                  children:
+                    - type: text
+                      value: Example, 2021
+            - type: text
+              value: ').'
+        - type: paragraph
+          children:
+            - type: text
+              value: 'Another citation: ('
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2022
+                  identifier: example_2022
+                  kind: parenthetical
+                  children:
+                    - type: text
+                      value: Example, 2022
+            - type: text
+              value: '), and ('
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2023
+                  identifier: example_2023
+                  kind: parenthetical
+                  children:
+                    - type: text
+                      value: Example, 2023
+            - type: text
+              value: ').'
+    after:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citation: '
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: parenthetical
+                - type: cite
+                  label: example_2021
+                  identifier: example_2021
+                  kind: parenthetical
+            - type: text
+              value: '.'
+        - type: paragraph
+          children:
+            - type: text
+              value: 'Another citation: '
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2022
+                  identifier: example_2022
+                  kind: parenthetical
+                - type: cite
+                  label: example_2023
+                  identifier: example_2023
+                  kind: parenthetical
+            - type: text
+              value: '.'
+  - title: Inline cite range fills
+    before:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citations: '
+            - type: cite
+              label: example_2020
+              identifier: example_2020
+              kind: parenthetical
+              children:
+                - type: text
+                  value: Example, 2020
+            - type: text
+              value: ' - '
+            - type: cite
+              label: example_2023
+              identifier: example_2023
+              kind: parenthetical
+              children:
+                - type: text
+                  value: Example, 2023
+    after:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citations: '
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: parenthetical
+                - type: cite
+                  label: example_2021
+                  identifier: example_2021
+                  kind: parenthetical
+                - type: cite
+                  label: example_2022
+                  identifier: example_2022
+                  kind: parenthetical
+                - type: cite
+                  label: example_2023
+                  identifier: example_2023
+                  kind: parenthetical
