@@ -6,7 +6,7 @@ import type { Root } from 'myst-spec';
 export type Handler = (node: GenericNode, state: IJatsParser, parent: any) => void;
 
 export type JatsResult = {
-  references: any;
+  references: { order: string[]; data: Record<string, { html: string; doi: string }> };
   tree: Root;
 };
 

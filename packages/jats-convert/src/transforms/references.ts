@@ -182,7 +182,7 @@ function bibtexFromCite(key: string, cite: GenericNode, counts: Counts, doi?: st
     bibtexLines.push(`  editor = {${editors.join(' and ')}}`);
   }
   if (doi) {
-    bibtexLines.push(`  doi = {${doi.replaceAll('_', '\\{_}')}}`);
+    bibtexLines.push(`  doi = {${doi}}`);
   }
   if (bibtexLines.length === 1) {
     counts.unprocessed += 1;
@@ -420,7 +420,7 @@ function savePMIDCache(cache: Record<string, string | null>, dir: string) {
 
 /**
  * Resolve cite nodes using reference lookup
- * 
+ *
  * Cite node may be converted to citeGroup or footnoteReference, depending
  * on the content in the reference lookup dictionary
  */

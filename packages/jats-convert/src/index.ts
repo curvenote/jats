@@ -24,6 +24,7 @@ import { backToBodyTransform } from './transforms/footnotes.js';
 import version from './version.js';
 import { toText } from './utils.js';
 import { inlineCitationsTransform } from './myst/inlineCitations.js';
+import { abbreviationSectionTransform } from './transforms/abbreviations.js';
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
@@ -151,9 +152,6 @@ const handlers: Record<string, Handler> = {
       state.renderChildren(node);
     }
   },
-  // comment() {
-  //   // Do not archive comments
-  // },
   bold(node, state) {
     state.renderInline(node, 'strong');
   },
@@ -188,6 +186,9 @@ const handlers: Record<string, Handler> = {
   // //   state.renderChildren(node, true);
   // // },
   ['ext-link'](node, state) {
+    state.renderInline(node, 'link', { url: node['xlink:href'] });
+  },
+  uri(node, state) {
     state.renderInline(node, 'link', { url: node['xlink:href'] });
   },
   ['boxed-text'](node, state) {
@@ -233,7 +234,10 @@ const handlers: Record<string, Handler> = {
     const caption = select('caption', node) as GenericNode;
     const graphic = select('graphic', node) as GenericNode;
     const title = select('title', node) as GenericNode;
-    state.openNode('container', { label: node.id, identifier: node.id, kind: 'figure' });
+    const { label, identifier } = normalizeLabel(node.id) ?? {};
+    state.openNode('container', { label, identifier, kind: 'figure' });
+    const wasInContainer = state.data.isInContainer;
+    state.data.isInContainer = true;
     const link = graphic?.['xlink:href'];
     if (link) {
       state.addLeaf('image', { url: link });
@@ -250,23 +254,32 @@ const handlers: Record<string, Handler> = {
     }
     state.closeNode();
     state.closeNode();
+    state.data.isInContainer = wasInContainer;
   },
   ['table-wrap'](node, state) {
-    const caption = (select('caption', node) ?? select('label', node)) as GenericNode;
-    const title = select('title', node) as GenericNode;
-    state.openNode('container', { label: node.id, identifier: node.id, kind: 'table' });
+    const captionNode = select('caption', node) as GenericNode | undefined;
+    const labelNode = select('label', node) as GenericNode | undefined;
+    const titleNode = select('title', node) as GenericNode | undefined;
+    const { label, identifier } = normalizeLabel(node.id) ?? {};
+    state.openNode('container', { label, identifier, kind: 'table' });
+    const wasInContainer = state.data.isInContainer;
+    state.data.isInContainer = true;
     state.openNode('caption');
-    if (title) {
+    if (titleNode) {
       state.openNode('strong');
-      state.renderChildren(title);
+      state.renderChildren(titleNode);
       state.closeNode();
+      titleNode.type = '__ignore__';
     }
-    if (caption) {
-      state.renderChildren(caption);
+    if (captionNode || labelNode) {
+      state.renderChildren(captionNode || labelNode);
+      if (captionNode) captionNode.type = '__ignore__';
+      if (labelNode) labelNode.type = '__ignore__';
     }
     state.closeNode();
     state.renderChildren(node);
     state.closeNode();
+    state.data.isInContainer = wasInContainer;
   },
   table(node, state) {
     state.openNode('table');
@@ -298,6 +311,15 @@ const handlers: Record<string, Handler> = {
     state.openNode('tableCell', { align, colspan, rowspan });
     state.renderChildren(node);
     state.closeNode();
+  },
+  ['table-wrap-foot'](node, state) {
+    state.openNode('legend');
+    state.renderChildren(node);
+    state.closeNode();
+  },
+  hr(node, state) {
+    if (state.data.isInContainer) return;
+    state.addLeaf('thematicBreak');
   },
   break(node, state) {
     state.addLeaf('break');
@@ -386,12 +408,13 @@ const handlers: Record<string, Handler> = {
   },
   xref(node, state) {
     const refType: RefType = node['ref-type'];
+    const { label, identifier } = normalizeLabel(node.rid) ?? {};
     switch (refType) {
       case RefType.bibr:
       case RefType.ref:
         state.renderInline(node, 'cite', {
-          label: node.rid,
-          identifier: node.rid,
+          label,
+          identifier,
           kind: 'narrative',
         });
         return;
@@ -400,12 +423,12 @@ const handlers: Record<string, Handler> = {
       case RefType.dispFormula:
       case RefType.table: {
         const kind = refTypeToReferenceKind(refType);
-        state.renderInline(node, 'crossReference', { label: node.rid, identifier: node.rid, kind });
+        state.renderInline(node, 'crossReference', { label, identifier, kind });
         return;
       }
       case RefType.fn:
       case RefType.tableFn: {
-        state.renderInline(node, 'footnoteReference', { label: node.rid, identifier: node.rid });
+        state.renderInline(node, 'footnoteReference', { label, identifier });
         return;
       }
       default: {
@@ -414,6 +437,14 @@ const handlers: Record<string, Handler> = {
         return;
       }
     }
+  },
+  // These nodes can be safely ignored
+  label() {},
+  comment() {},
+  __ignore__() {},
+  // TODO: Maybe more interesting things we can do with these sometime...
+  ['object-id']() {
+    // These are defined on figures/tables to give them ids, e.g. DOIs
   },
 };
 
@@ -619,8 +650,8 @@ export async function jatsConvertTransform(
     let licenseString: string | null = null;
     if (license?.['xlink:href']) {
       licenseString = license['xlink:href'];
-    } else if (select('[type=ali:license_ref]', license)) {
-      licenseString = toText(select('[type=ali:license_ref]', license));
+    } else if (select('[type=ali\\:license_ref]', license)) {
+      licenseString = toText(select('[type=ali\\:license_ref]', license));
     } else if (selectAll('ext-link', license).length === 1) {
       licenseString = (select('ext-link', license) as LinkMixin)['xlink:href'] ?? null;
     } else if (license) {
@@ -634,10 +665,11 @@ export async function jatsConvertTransform(
   backToBodyTransform(jats);
   const pipe = unified().use(jatsConvertPlugin, jats, opts);
   const vfile = pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
-  const references = (vfile as any).result.references;
+  const references = (vfile as any).result.references as JatsResult['references'];
   const tree = (vfile as any).result.tree as Root;
   resolveJatsCitations(tree, refLookup);
-  inlineCitationsTransform(tree);
+  inlineCitationsTransform(tree, [...Object.keys(references.data)]);
+  abbreviationSectionTransform(tree, frontmatter);
   const abstract = selectAll('block', tree).find((node) => {
     return node.data && (node.data as any).part === 'abstract';
   });
