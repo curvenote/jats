@@ -215,3 +215,33 @@ cases:
         - id: aff2
           institution: Department of Physiology, University of California San Francisco, San Francisco, California, United States of America
   # - title: contrib group with authors/affs with no ids
+  - title: <contrib> with uri
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><front>
+      <contrib-group>
+      <contrib>
+      <name>
+      <surname>Doe</surname>
+      <given-names>John</given-names>
+      </name>
+      <xref ref-type="aff" rid="aff2">
+      <sup>2</sup>
+      </xref>
+      <uri xlink:type="simple" xlink:href="https://frontiersin.org/people/u/1234" />
+      </contrib>
+      </contrib-group>
+      <aff id="aff2">
+      <label>2</label>
+      <addr-line>Department of Physiology, University of California San Francisco, San Francisco, California, United States of America</addr-line>
+      </aff>
+      </front></article>
+    frontmatter:
+      authors:
+        - name: John Doe
+          affiliations:
+            - aff2
+          url: https://frontiersin.org/people/u/1234
+      affiliations:
+        - id: aff2
+          institution: Department of Physiology, University of California San Francisco, San Francisco, California, United States of America

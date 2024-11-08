@@ -3,7 +3,7 @@ import { toText } from 'myst-common';
 import type { Node } from 'myst-spec';
 import { doi } from 'doi-utils';
 import { select, selectAll } from 'unist-util-select';
-import type { Affiliation, ArticleId, Contrib, Xref } from 'jats-tags';
+import type { Affiliation, ArticleId, Contrib, LinkMixin, Xref } from 'jats-tags';
 import { Tags } from 'jats-tags';
 import type { Affiliation as AffiliationFM, Contributor as ContributorFM } from 'myst-frontmatter';
 import { remove } from 'unist-util-remove';
@@ -35,6 +35,10 @@ export function processContributor(contrib: Contrib): ContributorFM {
   const affiliationIds = affiliationRefs.map((xref) => xref.rid);
   if (affiliationIds.length > 0) {
     author.affiliations = affiliationIds;
+  }
+  const uri = select('uri', contrib) as LinkMixin | undefined;
+  if (uri?.['xlink:href']) {
+    author.url = uri['xlink:href'];
   }
   // If there are no aff xrefs AND contrib is in a contrib group with affs AND those affs do not have IDs, add them as affiliations...
   return author;
