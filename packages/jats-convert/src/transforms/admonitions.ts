@@ -1,13 +1,10 @@
 import type { Plugin } from 'unified';
-import type { Heading } from 'myst-spec';
 import type { GenericParent } from 'myst-common';
 import { RuleId, fileWarn } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { remove } from 'unist-util-remove';
 import { Tags } from 'jats-tags';
 import type { VFile } from 'vfile';
-
-export type Section = Omit<Heading, 'type'> & { type: 'section' };
 
 /**
  * Convert boxed-text caption to admonitionTitle (with content from caption > title)
