@@ -1,5 +1,6 @@
-import { toText, type GenericNode } from 'myst-common';
+import type { GenericNode } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
+import { toText } from '../utils.js';
 
 export function isBioRxiv(tree?: GenericNode) {
   const journalId = select('journal-id[journal-id-type=hwp]', tree);

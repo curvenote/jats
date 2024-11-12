@@ -40,7 +40,6 @@ import {
   convertToXml,
   toDate,
 } from 'jats-utils';
-import { citationToMixedCitation, journalTransforms } from './transforms/index.js';
 
 type Options = { log?: Logger; source?: string };
 
@@ -85,8 +84,6 @@ export class Jats {
     }
     this.doctype = elements[0].doctype;
     const converted = convertToUnist(elements[1]);
-    citationToMixedCitation(converted);
-    journalTransforms(converted);
     this.tree = select('article', converted) as GenericParent;
     this.log?.debug(toc('Parsed and converted JATS to unist tree in %s'));
   }
@@ -138,6 +135,7 @@ export class Jats {
       keywords: keywords.length ? keywords : undefined,
       venue: journalTitle ? { title: toText(journalTitle) } : undefined,
       subject: firstSubject ? toText(firstSubject) : undefined,
+      // license needs to be better
       license: licenseString ?? undefined,
     };
   }

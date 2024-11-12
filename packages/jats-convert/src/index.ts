@@ -16,7 +16,11 @@ import { Jats } from 'jats-xml';
 import { MathMLToLaTeX } from 'mathml-to-latex';
 import { js2xml } from 'xml-js';
 import type { Handler, IJatsParser, JatsResult, Options, StateData } from './types.js';
-import { basicTransformations } from './transforms/index.js';
+import {
+  basicTransformations,
+  citationToMixedCitation,
+  journalTransforms,
+} from './transforms/index.js';
 import type { ProjectFrontmatter } from 'myst-frontmatter';
 import { abstractTransform, descriptionFromAbstract } from './transforms/abstract.js';
 import { processJatsReferences, resolveJatsCitations } from './transforms/references.js';
@@ -574,6 +578,8 @@ export const jatsConvertPlugin: Plugin<[Jats, Options?], Root, Root> = function 
       });
     }
     basicTransformations(tree, file);
+    citationToMixedCitation(tree);
+    journalTransforms(tree);
     const state = new JatsParser(file, jats, opts ?? { handlers });
     state.renderChildren(tree);
     while (state.stack.length > 1) state.closeNode();
