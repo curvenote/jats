@@ -1,7 +1,10 @@
+import fs from 'node:fs';
+import { pipeline } from 'node:stream';
+import { promisify } from 'node:util';
 import fetch from 'node-fetch';
 import type { S3Client } from '@aws-sdk/client-s3';
 import { HeadObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import type { DownloadResult } from './types.js';
+import type { DownloadResult, Fetcher, S3Config } from './types.js';
 
 export function defaultFetcher(url: string, kind?: 'json' | 'xml') {
   switch (kind) {
@@ -14,21 +17,16 @@ export function defaultFetcher(url: string, kind?: 'json' | 'xml') {
   }
 }
 
-const S3_CONFIG: { bucketName: string; paths: string[]; typeMap: Record<string, string> } = {
-  bucketName: 'pmc-oa-opendata',
-  paths: ['oa_comm/xml/all/', 'oa_noncomm/xml/all/', 'author_manuscript/xml/all/'],
-  typeMap: {
-    'oa_comm/xml/all/': 'Open Access (oa_comm)',
-    'oa_noncomm/xml/all/': 'Open Access NonCommercial (oa_noncomm)',
-    'author_manuscript/xml/all/': 'AAM (author_manuscript)',
-  },
-};
-
-export async function checkFileExists(client: S3Client, id: string, path: string) {
+export async function checkFileExists(
+  client: S3Client,
+  id: string,
+  path: string,
+  config: S3Config,
+) {
   const key = `${path}${id}.xml`;
   try {
     const command = new HeadObjectCommand({
-      Bucket: S3_CONFIG.bucketName,
+      Bucket: config.bucketName,
       Key: key,
     });
     await client.send(command);
@@ -48,13 +46,13 @@ export async function checkFileExists(client: S3Client, id: string, path: string
 /**
  * Find if file exists on one of the S3 paths
  */
-export async function findFile(client: S3Client, id: string) {
-  for (const path of S3_CONFIG.paths) {
-    const result = await checkFileExists(client, id, path);
+export async function findFile(client: S3Client, id: string, config: S3Config) {
+  for (const path of config.paths) {
+    const result = await checkFileExists(client, id, path, config);
     if (result) {
       return {
         path: result,
-        type: S3_CONFIG.typeMap[path],
+        type: config.typeMap[path],
       };
     }
   }
@@ -62,17 +60,27 @@ export async function findFile(client: S3Client, id: string) {
 
 export async function downloadFileFromS3(
   client: S3Client,
-  s3FilePath: string,
+  filePath: string,
+  config: S3Config,
 ): Promise<DownloadResult> {
   const command = new GetObjectCommand({
-    Bucket: S3_CONFIG.bucketName,
-    Key: s3FilePath,
+    Bucket: config.bucketName,
+    Key: filePath,
   });
   try {
     const response = await client.send(command);
     const data = await response.Body?.transformToString();
-    return { success: !!data, source: s3FilePath, data };
+    return { success: !!data, source: filePath, data };
   } catch (err) {
-    return { success: false, source: s3FilePath };
+    return { success: false, source: filePath };
   }
+}
+
+export async function streamToFile(url: string, dest: string, fetcher?: Fetcher) {
+  const resp = await (fetcher ?? defaultFetcher)(url);
+  if (!resp.ok || !resp.body) {
+    return { success: false, status: resp.status, statusText: resp.statusText };
+  }
+  await promisify(pipeline)(resp.body, fs.createWriteStream(dest));
+  return { success: true, dest, status: resp.status, statusText: resp.statusText };
 }

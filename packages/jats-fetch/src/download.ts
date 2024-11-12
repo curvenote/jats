@@ -3,7 +3,12 @@ import path from 'node:path';
 import { doi } from 'doi-utils';
 import type { ISession } from 'myst-cli-utils';
 import { isUrl, tic } from 'myst-cli-utils';
-import { constructJatsUrlFromPubMedCentral, getPubMedJatsFromS3 } from './pubmed.js';
+import {
+  constructJatsUrlFromPubMedCentral,
+  getDataFromPMC,
+  getPubMedJatsFromData,
+  getPubMedJatsFromS3,
+} from './pubmed.js';
 import { customResolveJatsUrlFromDoi } from './resolvers.js';
 import type { DownloadResult, ResolutionOptions } from './types.js';
 import { defaultFetcher } from './utils.js';
@@ -157,6 +162,8 @@ export async function jatsFetch(
   opts: { output?: string; data?: boolean; listing?: string },
 ) {
   let output = opts.output ?? (opts.data ? `${input}` : '.');
+  const filename = input.startsWith('PMC') ? `${input}.xml` : 'jats.xml';
+  output = path.join(output, filename);
   if (path.extname(output) && !['.xml', '.jats'].includes(path.extname(output).toLowerCase())) {
     session.log.error(`Output must be an XML file or a directory`);
     process.exit(1);
@@ -167,8 +174,12 @@ export async function jatsFetch(
   } catch {
     // Still options here if input is PMC
   }
+  // This needs to do better with doi/pmc/pm conversions
   if (!result?.data && input.startsWith('PMC')) {
     result = await getPubMedJatsFromS3(session, input);
+    if (!result?.data) {
+      result = await getPubMedJatsFromData(session, input, path.dirname(output), opts.listing);
+    }
   }
   // Last, could try downloading zip...
   if (!result?.data) {
@@ -176,14 +187,16 @@ export async function jatsFetch(
     process.exit(1);
   }
   if (!path.extname(output)) {
-    const filename = input.startsWith('PMC') ? `${input}.xml` : 'jats.xml';
     fs.mkdirSync(output, { recursive: true });
-    output = path.join(output, filename);
   } else {
     fs.mkdirSync(path.dirname(output), { recursive: true });
   }
   fs.writeFileSync(output, result.data);
   session.log.info(`JATS written to ${output}`);
   if (!opts.data) return;
-  session.log.warn(`JATS data not quite yet implemented :)`);
+  if (input.startsWith('PMC')) {
+    await getDataFromPMC(session, input, path.dirname(output), opts.listing);
+  } else {
+    session.log.error('Data may only be downloaded for PMC articles');
+  }
 }
