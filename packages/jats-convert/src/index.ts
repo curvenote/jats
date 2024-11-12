@@ -442,6 +442,15 @@ const handlers: Record<string, Handler> = {
       }
     }
   },
+  ['supplementary-material'](node, state) {
+    state.renderChildren(node);
+  },
+  media(node, state) {
+    state.renderInline(node, 'link', { url: node['xlink:href'] });
+  },
+  caption(node, state) {
+    state.renderChildren(node);
+  },
   // These nodes can be safely ignored
   label() {},
   comment() {},
