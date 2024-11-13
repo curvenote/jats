@@ -29,6 +29,7 @@ export interface IJatsParser<D extends Record<string, any> = StateData> {
   jats: Jats;
   options: Options;
   stack: GenericNode[];
+  top: () => GenericNode;
   text: (value?: string) => void;
   renderChildren: (node: any) => void;
   renderInline: (node: GenericNode, name: string, attributes?: Record<string, any>) => void;

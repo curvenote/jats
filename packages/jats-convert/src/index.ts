@@ -455,9 +455,11 @@ const handlers: Record<string, Handler> = {
   label() {},
   comment() {},
   __ignore__() {},
-  // TODO: Maybe more interesting things we can do with these sometime...
-  ['object-id']() {
-    // These are defined on figures/tables to give them ids, e.g. DOIs
+  ['object-id'](node, state) {
+    // TODO: handle other id types?
+    if (node['pub-id-type'] === 'doi') {
+      state.top().doi = toText(node);
+    }
   },
 };
 
