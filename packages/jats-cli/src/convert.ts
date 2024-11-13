@@ -13,7 +13,7 @@ function makeConvertCLI(program: Command) {
     )
     .addOption(
       new Option(
-        '--no-dois',
+        '--no-dois, --no-doi',
         'By default, DOIs are used for references when available, to be later resolved against doi.org. This option disables that behavior and creates bibtex entries for citations with DOIs.',
       ),
     )
