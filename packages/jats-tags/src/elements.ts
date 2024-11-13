@@ -78,6 +78,7 @@ export type PubDate = GenericParent & {
 export type License = GenericParent &
   LinkMixin & {
     type: Tags.license;
+    'license-type'?: string;
   };
 
 export type Abstract = GenericParent & {

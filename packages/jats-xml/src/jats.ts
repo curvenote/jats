@@ -3,7 +3,7 @@ import { toText } from 'myst-common';
 import { xml2js } from 'xml-js';
 import { doi } from 'doi-utils';
 import type { Element, DeclarationAttributes } from 'xml-js';
-import type { PageFrontmatter } from 'myst-frontmatter';
+import { validatePageFrontmatter, type PageFrontmatter } from 'myst-frontmatter';
 import { select as unistSelect, selectAll } from 'unist-util-select';
 import { Tags } from 'jats-tags';
 import { findArticleId, processAffiliation, processContributor } from './utils.js';
@@ -88,7 +88,7 @@ export class Jats {
     this.log?.debug(toc('Parsed and converted JATS to unist tree in %s'));
   }
 
-  get frontmatter(): Omit<PageFrontmatter, 'license'> & { license?: string } {
+  get frontmatter(): PageFrontmatter {
     const title = this.articleTitle;
     const subtitle = this.articleSubtitle;
     const short_title = this.articleAltTitle;
@@ -123,21 +123,35 @@ export class Jats {
     } else if (license) {
       licenseString = toText(license);
     }
-    return {
-      title: title ? toText(title) : undefined,
-      subtitle: subtitle ? toText(subtitle) : undefined,
-      short_title: short_title ? toText(short_title) : undefined,
-      doi: this.doi ?? undefined,
-      date,
-      authors: authors.length ? authors : undefined,
-      // editors,
-      affiliations: affiliations.length ? affiliations : undefined,
-      keywords: keywords.length ? keywords : undefined,
-      venue: journalTitle ? { title: toText(journalTitle) } : undefined,
-      subject: firstSubject ? toText(firstSubject) : undefined,
-      // license needs to be better
-      license: licenseString ?? undefined,
-    };
+    let openAccess: boolean | undefined;
+    const licenseType = license?.['license-type']?.toLowerCase();
+    if (licenseType && ['openaccess', 'open-access'].includes(licenseType)) {
+      openAccess = true;
+    } else if (licenseString?.match(/^\s*Open Access\s*This/)) {
+      licenseString = licenseString.replace(/^\s*Open Access\s*/, '');
+      openAccess = true;
+    } else if (licenseString?.toLowerCase().startsWith('this is an open access article')) {
+      openAccess = true;
+    }
+    const frontmatter: PageFrontmatter = validatePageFrontmatter(
+      {
+        title: title ? toText(title) : undefined,
+        subtitle: subtitle ? toText(subtitle) : undefined,
+        short_title: short_title ? toText(short_title) : undefined,
+        doi: this.doi ?? undefined,
+        date,
+        authors: authors.length ? authors : undefined,
+        // editors,
+        affiliations: affiliations.length ? affiliations : undefined,
+        keywords: keywords.length ? keywords : undefined,
+        venue: journalTitle ? { title: toText(journalTitle) } : undefined,
+        subject: firstSubject ? toText(firstSubject) : undefined,
+        license: licenseString ?? undefined,
+        open_access: openAccess,
+      },
+      { property: 'frontmatter', messages: {} },
+    );
+    return frontmatter;
   }
 
   get front(): Front | undefined {

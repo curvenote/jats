@@ -653,7 +653,7 @@ export async function jatsConvertTransform(
   jats: Jats;
   file: VFile;
   references: any;
-  frontmatter: Omit<ProjectFrontmatter, 'license'> & { license?: string };
+  frontmatter: ProjectFrontmatter;
 }> {
   const jats = typeof data === 'string' ? new Jats(data) : data;
   if (opts?.logInfo) {
