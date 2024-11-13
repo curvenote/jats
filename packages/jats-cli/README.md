@@ -30,10 +30,20 @@ Commands available:
 `download`: attempt to find the JATS file and download it locally.
 
 ```bash
-jats download https://elifesciences.org/articles/81952 article.jats
+jats download https://elifesciences.org/articles/81952 -o article.jats
 ```
 
-Note, currently this just downloads the XML, **not** the associated files.
+For some Open Access PMC articles, you may download associated files with the `--data` option.
+
+```bash
+jats download PMC11025918 --data
+```
+
+`convert`: convert a JATS file to MyST-compatible JSON. The `--frontmatter project` option will write frontmatter to a `myst.yml` file.
+
+```bash
+jats convert article.jats --frontmatter project
+```
 
 `summary`: summarize the contents of the JATS, given a URL, DOI, or local file
 
