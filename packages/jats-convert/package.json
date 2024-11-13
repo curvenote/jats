@@ -27,7 +27,7 @@
     "clean": "rimraf dist",
     "lint": "eslint \"src/**/*.ts\" -c .eslintrc.cjs --max-warnings 1",
     "lint:format": "prettier --check src/*.ts src/**/*.ts",
-    "test": "npm run copy:version && vitest run inline",
+    "test": "npm run copy:version && vitest run",
     "test:watch": "npm run copy:version && vitest watch",
     "build:esm": "tsc",
     "build": "npm-run-all -l clean copy:version -p build:esm"
@@ -36,19 +36,19 @@
     "url": "https://github.com/curvenote/jats/issues"
   },
   "dependencies": {
-    "doi-utils": "^2.0.2",
+    "doi-utils": "^2.0.3",
     "dotenv": "^16.4.5",
     "jats-fetch": "^1.0.9",
     "jats-tags": "^1.0.9",
     "jats-xml": "^1.0.9",
     "js-yaml": "^4.1.0",
     "mathml-to-latex": "^1.3.0",
-    "myst-cli-utils": "^2.0.10",
-    "myst-common": "^1.7.2",
-    "myst-frontmatter": "^1.7.2",
+    "myst-cli-utils": "^2.0.11",
+    "myst-common": "^1.7.5",
+    "myst-frontmatter": "^1.7.5",
     "myst-spec": "^0.0.5",
-    "myst-spec-ext": "^1.7.2",
-    "myst-transforms": "^1.3.26",
+    "myst-spec-ext": "^1.7.5",
+    "myst-transforms": "^1.3.27",
     "openai": "^4.60.0",
     "unified": "^10.0.0",
     "unist-builder": "^3.0.0",
@@ -60,6 +60,6 @@
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
-    "myst-to-tex": "^1.0.38"
+    "myst-to-tex": "^1.0.40"
   }
 }
