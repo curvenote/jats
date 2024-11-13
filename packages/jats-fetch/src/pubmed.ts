@@ -300,7 +300,7 @@ export async function getListingsFile(session: ISession, dest?: string, fetcher?
   }
   if (!fs.existsSync(dest)) {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
-    session.log.info('Fetching PMC Open Access listing...');
+    session.log.info('Fetching PMC Open Access listing (this may take a while)...');
     session.log.debug(`Fetching PMC Open Access listing from ${LISTING_URL}`);
     const { success, status, statusText } = await streamToFile(LISTING_URL, dest, fetcher);
     if (!success) {
@@ -374,7 +374,6 @@ async function downloadAndUnzipPMC(
       const jpgFile = gifFile.replace(/.gif$/, '.jpg');
       if (fs.existsSync(jpgFile)) fs.rmSync(gifFile);
     });
-  // deal with jats from bundle
 }
 
 export async function getDataFromPMC(

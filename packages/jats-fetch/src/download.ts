@@ -6,6 +6,7 @@ import { isUrl, tic } from 'myst-cli-utils';
 import {
   constructJatsUrlFromPubMedCentral,
   getDataFromPMC,
+  getListingsFile,
   getPubMedJatsFromData,
   getPubMedJatsFromS3,
 } from './pubmed.js';
@@ -161,6 +162,11 @@ export async function jatsFetch(
   input: string,
   opts: { output?: string; data?: boolean; listing?: string },
 ) {
+  if (input === 'listing' && !opts.data && !(opts.output && opts.listing)) {
+    const dest = await getListingsFile(session, opts.output ?? opts.listing);
+    session.log.info(`PMC Open Access listing saved to ${dest}`);
+    return;
+  }
   let output = opts.output ?? (opts.data ? `${input}` : '.');
   const filename = input.startsWith('PMC') ? `${input}.xml` : 'jats.xml';
   output = path.join(output, filename);
