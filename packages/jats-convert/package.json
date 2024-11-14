@@ -1,6 +1,6 @@
 {
   "name": "jats-convert",
-  "version": "0.0.0",
+  "version": "1.0.10",
   "description": "Read JATS and convert to MyST-spec frontmatter and AST",
   "author": "Rowan Cockett <rowan@curvenote.com>",
   "homepage": "https://github.com/curvenote/jats/tree/main/packages/jats-convert",
@@ -38,9 +38,9 @@
   "dependencies": {
     "doi-utils": "^2.0.3",
     "dotenv": "^16.4.5",
-    "jats-fetch": "^1.0.9",
-    "jats-tags": "^1.0.9",
-    "jats-xml": "^1.0.9",
+    "jats-fetch": "^1.0.10",
+    "jats-tags": "^1.0.10",
+    "jats-xml": "^1.0.10",
     "js-yaml": "^4.1.0",
     "mathml-to-latex": "^1.3.0",
     "myst-cli-utils": "^2.0.11",

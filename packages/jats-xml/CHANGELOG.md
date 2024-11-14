@@ -1,5 +1,21 @@
 # jats-xml
 
+## 1.0.10
+
+### Patch Changes
+
+- 719058d: Improve affiliation handling
+- 719058d: Support author urls
+- 719058d: Refactor jats-cli to separate package
+- 719058d: Allow missing doctype
+- 719058d: Add biorxiv specific transforms
+- 719058d: Improve license string collection
+- Updated dependencies [719058d]
+- Updated dependencies [719058d]
+- Updated dependencies [719058d]
+  - jats-tags@1.0.10
+  - jats-utils@1.0.10
+
 ## 1.0.9
 
 ### Patch Changes

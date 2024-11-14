@@ -1,5 +1,18 @@
 # meca
 
+## 1.0.10
+
+### Patch Changes
+
+- Updated dependencies [719058d]
+- Updated dependencies [719058d]
+- Updated dependencies [719058d]
+- Updated dependencies [719058d]
+- Updated dependencies [719058d]
+- Updated dependencies [719058d]
+  - jats-xml@1.0.10
+  - jats-utils@1.0.10
+
 ## 1.0.9
 
 ### Patch Changes

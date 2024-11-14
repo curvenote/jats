@@ -1,5 +1,13 @@
 # jats-tags
 
+## 1.0.10
+
+### Patch Changes
+
+- 719058d: Refactor jats-cli to separate package
+- 719058d: Fix contrib type tag
+- 719058d: Add ref to ref-types
+
 ## 1.0.9
 
 ## 1.0.8
