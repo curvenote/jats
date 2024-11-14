@@ -18,6 +18,8 @@ export type Options = {
   logInfo?: Record<string, any>;
   // If true, this will leave citations with DOIs to be resolved later
   dois?: boolean;
+  // If true, this will write a bibtex file, as necessary
+  bibtex?: boolean;
 };
 
 export type StateData = {

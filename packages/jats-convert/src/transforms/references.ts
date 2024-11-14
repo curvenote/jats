@@ -317,14 +317,12 @@ function processRef(
  * as some references hold multiple citations, and these must include footnotes
  * as sometimes footnotes are in the ref list.
  *
- * This function also (1) writes a bibtex file if necessary and appends footnotes
+ * This function also writes a bibtex file if necessary and appends footnotes
  * to the jats tree.
  */
 export async function processJatsReferences(jats: Jats, opts?: Options) {
   const dir = opts?.dir ?? '.';
   const bibfile = path.join(dir, 'main.bib');
-  // writeBibtex = typeof writeBibtex === 'boolean' ? writeBibtex : !fs.existsSync(bibfile);
-  const writeBibtex = !fs.existsSync(bibfile);
   const refs = jats.references;
   let refLookup: Record<string, ProcessedReference[]> = {};
   const footnotes: GenericNode[] = [];
@@ -374,7 +372,7 @@ export async function processJatsReferences(jats: Jats, opts?: Options) {
         refLookup[key].push(...refLookup[subKey]);
       });
   });
-  if (bibtexEntries.length && writeBibtex) {
+  if (bibtexEntries.length && opts?.bibtex) {
     fs.writeFileSync(bibfile, bibtexEntries.join('\n\n'));
   }
   if (footnotes.length) {

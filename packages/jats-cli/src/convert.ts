@@ -17,6 +17,12 @@ function makeConvertCLI(program: Command) {
         'By default, DOIs are used for references when available, to be later resolved against doi.org. This option disables that behavior and creates bibtex entries for citations with DOIs.',
       ),
     )
+    .addOption(
+      new Option(
+        '--no-bibtex, --no-bib',
+        'By default, a bibtex file will be written with referenced citations. This option prevents writing that file',
+      ),
+    )
     .action(jatsConvert);
   return command;
 }
