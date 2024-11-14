@@ -36,11 +36,11 @@ function processRefNote(
   ref: { footnote: string };
   footnote: GenericNode;
 } {
-  const noteId = note.id;
+  const { identifier } = normalizeLabel(note.id) ?? {};
   const footnote = copyNode(note);
   footnote.type = 'fn';
   footnote.id = fnId;
-  return { noteId, ref: { footnote: fnId }, footnote };
+  return { noteId: identifier, ref: { footnote: fnId }, footnote };
 }
 
 const BIBTEX_TYPE: Record<string, string> = {
@@ -211,8 +211,8 @@ function processRefCite(
   ref: Omit<ProcessedReference, 'footnote'>;
   bibtex?: string;
 } {
-  const citeId = cite.id;
-  const key = citeId ?? fallbackKey;
+  const { identifier } = normalizeLabel(cite.id) ?? {};
+  const key = identifier ?? fallbackKey;
   let doi: string | undefined;
   const doiElement = select('ext-link,[pub-id-type=doi]', cite);
   if (doiElement) {
@@ -238,10 +238,10 @@ function processRefCite(
   }
   if (dois && doi) {
     counts.dois += 1;
-    return { citeId, ref: { cite: `https://doi.org/${doi}` } };
+    return { citeId: identifier, ref: { cite: `https://doi.org/${doi}` } };
   }
   const bibtex = bibtexFromCite(key, cite, counts, doi);
-  return { citeId, ref: { cite: key }, bibtex };
+  return { citeId: identifier, ref: { cite: key }, bibtex };
 }
 
 /**
@@ -276,24 +276,25 @@ function processRef(
   if (ref.type !== 'ref') {
     throw new Error(`Unexpected type for reference: ${ref.type}`);
   }
-  if (!ref.id) {
+  const { identifier } = normalizeLabel(ref.id) ?? {};
+  if (!identifier) {
     throw new Error(`Encountered "ref" without id`);
   }
-  const refLookup: Record<string, ProcessedReference[]> = { [ref.id]: [] };
+  const refLookup: Record<string, ProcessedReference[]> = { [identifier]: [] };
   const footnotes: GenericNode[] = [];
   const bibtexEntries: string[] = [];
   ref.children?.forEach((child) => {
     if (['element-citation', 'mixed-citation'].includes(child.type)) {
       if (!toText(child)) return;
-      const cite = processRefCite(child, ref.id, pmidCache, counts, dois);
-      refLookup[ref.id].push(cite.ref);
+      const cite = processRefCite(child, identifier, pmidCache, counts, dois);
+      refLookup[identifier].push(cite.ref);
       if (cite.citeId) refLookup[cite.citeId] = [cite.ref];
       if (cite.bibtex) bibtexEntries.push(cite.bibtex);
     } else if (child.type === 'note') {
       // Ignore notes unless they are the only child or labeled
       // if (ref.children.length === 1 || child.children?.map((c) => c.type).includes('label')) {
       const fn = processRefNote(child, `${fnCount + footnotes.length}`);
-      refLookup[ref.id].push(fn.ref);
+      refLookup[identifier].push(fn.ref);
       if (fn.noteId) refLookup[fn.noteId] = [fn.ref];
       footnotes.push(fn.footnote);
       // } else {
