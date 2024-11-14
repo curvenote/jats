@@ -33,8 +33,6 @@
     "unlink": "npm uninstall -g jats-cli",
     "link": "npm run unlink; npm link;",
     "dev": "npm run copy:version && npm run link && esbuild src/index.ts --bundle --outfile=dist/jats.cjs --platform=node --watch",
-    "test": "npm run copy:version && vitest run",
-    "test:watch": "npm run copy:version && vitest watch",
     "lint": "eslint \"src/**/*.ts*\" -c ./.eslintrc.cjs",
     "lint:format": "prettier --check \"src/**/*.{ts,tsx,md}\"",
     "build:esm": "tsc",

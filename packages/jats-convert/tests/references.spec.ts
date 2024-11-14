@@ -29,7 +29,7 @@ function loadCases(file: string) {
 describe('JATS references to DOI', () => {
   const cases = loadCases('references.yml');
   test.each(cases.map((c): [string, TestCase] => [c.title, c]))('%s', async (_, { doi, jats }) => {
-    const loaded = await jatsConvertTransform(new Jats(jats));
+    const loaded = await jatsConvertTransform(new Jats(jats), { dois: true });
     const citeNodes = selectAll('cite', loaded.tree) as GenericNode[];
     expect(citeNodes.length).toEqual(1);
     expect(citeNodes[0].label).toEqual(doi);

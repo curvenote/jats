@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import yaml from 'js-yaml';
 import { Jats } from '../src';
+import { validatePageFrontmatter } from 'myst-frontmatter';
 
 type TestFile = {
   cases: TestCase[];
@@ -28,7 +29,9 @@ describe('JATS frontmatter', () => {
     '%s',
     async (_, { frontmatter, jats }) => {
       const loaded = new Jats(jats);
-      expect(loaded.frontmatter).toEqual(frontmatter);
+      expect(loaded.frontmatter).toEqual(
+        validatePageFrontmatter(frontmatter, { property: '', messages: {} }),
+      );
     },
   );
 });

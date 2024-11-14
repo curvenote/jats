@@ -24,7 +24,7 @@ cases:
     frontmatter:
       affiliations:
         - id: aff1
-          institution: Janelia Farm Research Campus, Howard Hughes Medical Institute, 19700 Helix Drive, Ashburn, Virginia 20147, United States
+          name: Janelia Farm Research Campus, Howard Hughes Medical Institute, 19700 Helix Drive, Ashburn, Virginia 20147, United States
   - title: <aff> with label and text
     jats: |-
       <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
@@ -34,7 +34,7 @@ cases:
     frontmatter:
       affiliations:
         - id: af1-molecules-13-00204
-          institution: Department of Biochemistry, University of Wisconsin–Madison, 433 Babcock Drive, Madison, WI 53706-1544, USA
+          name: Department of Biochemistry, University of Wisconsin–Madison, 433 Babcock Drive, Madison, WI 53706-1544, USA
   - title: <aff> with institution and addr-line
     jats: |-
       <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
@@ -44,7 +44,7 @@ cases:
     frontmatter:
       affiliations:
         - id: aff1
-          institution: Janelia Farm Research Campus
+          name: Janelia Farm Research Campus
           address: Howard Hughes Medical Institute 19700 Helix Drive, Ashburn, VA 20147 (USA)
   - title: <aff> with label, institution, addr-line, country, and commas
     jats: |-
@@ -55,7 +55,7 @@ cases:
     frontmatter:
       affiliations:
         - id: aff1
-          institution: Janelia Farm Research Campus, Howard Hughes Medical Institute
+          name: Janelia Farm Research Campus, Howard Hughes Medical Institute
           address: Ashburn
           country: United States
   - title: <aff> with label, department addr-line, institution, addr-line, country, and commas
@@ -68,7 +68,7 @@ cases:
       affiliations:
         - id: aff3
           department: Department of Molecular and Cell Biology
-          institution: University of California, Berkeley
+          name: University of California, Berkeley
           address: Berkeley
           country: United States
   - title: <aff> with institution, country, and comma
@@ -80,7 +80,7 @@ cases:
     frontmatter:
       affiliations:
         - id: aff1
-          institution: University of California, San Diego
+          name: University of California, San Diego
           country: United States
   - title: <aff> with label, dept institution, institution, addr-line, country, and commas
     jats: |-
@@ -92,7 +92,7 @@ cases:
       affiliations:
         - id: aff3
           department: Center for Medical, Agricultural, and Veterinary Entomology
-          institution: USDA-ARS
+          name: USDA-ARS
           address: Gainesville
           country: United States
   - title: <aff> with label with sup, named-content for organisation-division, institution, named-content for street / city / country-part / post-code, country, and no other text!
@@ -105,7 +105,7 @@ cases:
       affiliations:
         - id: anie201509649-aff-0001
           department: Janelia Research Campus
-          institution: Howard Hughes Medical Institute
+          name: Howard Hughes Medical Institute
           address: 19700 Helix Drive
           city: Ashburn
           state: VA
@@ -120,7 +120,7 @@ cases:
     frontmatter:
       affiliations:
         - id: af1
-          institution: Transcription Imaging Consortium, Janelia Research Campus, Howard Hughes Medical Institute, Ashburn, Virginia 20147, USA
+          name: Transcription Imaging Consortium, Janelia Research Campus, Howard Hughes Medical Institute, Ashburn, Virginia 20147, USA
   - title: <aff> with label, institution-wrap, institution-ids, institutions, text
     jats: |-
       <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
@@ -130,7 +130,7 @@ cases:
     frontmatter:
       affiliations:
         - id: Aff1
-          institution: The Vollum Institute, Oregon Health and Science University, 3181S.W. Sam Jackson Pk. Rd., Portland, OR 97239 USA
+          name: The Vollum Institute, Oregon Health and Science University, 3181S.W. Sam Jackson Pk. Rd., Portland, OR 97239 USA
           isni: 0000 0000 9758 5690
           ror: https://ror.org/00t9vx427
   - title: <aff> with text, institution, text, country
@@ -142,7 +142,7 @@ cases:
     frontmatter:
       affiliations:
         - id: aff1
-          institution: Janelia Research Campus, Howard Hughes Medical Institute, Ashburn, Virginia 20147
+          name: Janelia Research Campus, Howard Hughes Medical Institute, Ashburn, Virginia 20147
           country: United States
   - title: <aff> with label, institution-wrap, institution-ids, institution, text
     jats: |-
@@ -154,7 +154,7 @@ cases:
       affiliations:
         - id: Aff1
           isni: 0000 0001 2106 639X
-          institution: University of Bordeaux, F-33000 Bordeaux, France
+          name: University of Bordeaux, F-33000 Bordeaux, France
   - title: <aff> with label, dept institution, institution, addr-line, and country
     jats: |-
       <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
@@ -165,7 +165,7 @@ cases:
       affiliations:
         - id: aff1
           department: Department of Molecular and Cell Biology, Li Ka Shing Center for Biomedical and Health Sciences, CIRM Center of Excellence
-          institution: University of California, Berkeley
+          name: University of California, Berkeley
           address: Berkeley
           country: United States
   - title: <aff> with label, institution, addr-line, and country
@@ -177,7 +177,7 @@ cases:
     frontmatter:
       affiliations:
         - id: aff5
-          institution: Janelia Research Campus, Howard Hughes Medical Institute
+          name: Janelia Research Campus, Howard Hughes Medical Institute
           address: Ashburn
           country: United States
   - title: <aff> with institution and country
@@ -189,7 +189,7 @@ cases:
     frontmatter:
       affiliations:
         - id: aff7
-          institution: University of Oxford
+          name: University of Oxford
           country: United Kingdom
   - title: <aff> with addr-line only
     jats: |-
@@ -200,7 +200,7 @@ cases:
     frontmatter:
       affiliations:
         - id: edit1
-          institution: Imperial College London, UNITED KINGDOM
+          name: Imperial College London, UNITED KINGDOM
   - title: <aff> with department addr-line only
     jats: |-
       <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
@@ -213,7 +213,7 @@ cases:
     frontmatter:
       affiliations:
         - id: aff2
-          institution: Department of Physiology, University of California San Francisco, San Francisco, California, United States of America
+          name: Department of Physiology, University of California San Francisco, San Francisco, California, United States of America
   # - title: contrib group with authors/affs with no ids
   - title: <contrib> with uri
     jats: |-
@@ -244,4 +244,4 @@ cases:
           url: https://frontiersin.org/people/u/1234
       affiliations:
         - id: aff2
-          institution: Department of Physiology, University of California San Francisco, San Francisco, California, United States of America
+          name: Department of Physiology, University of California San Francisco, San Francisco, California, United States of America
