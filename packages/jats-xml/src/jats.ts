@@ -3,10 +3,10 @@ import { toText } from 'myst-common';
 import { xml2js } from 'xml-js';
 import { doi } from 'doi-utils';
 import type { Element, DeclarationAttributes } from 'xml-js';
-import type { PageFrontmatter } from 'myst-frontmatter';
+import { validatePageFrontmatter, type PageFrontmatter } from 'myst-frontmatter';
 import { select as unistSelect, selectAll } from 'unist-util-select';
 import { Tags } from 'jats-tags';
-import { authorAndAffiliation, findArticleId } from './utils.js';
+import { findArticleId, processAffiliation, processContributor } from './utils.js';
 import type {
   Front,
   Body,
@@ -23,10 +23,12 @@ import type {
   Abstract,
   ContribGroup,
   Contrib,
+  Affiliation,
   KeywordGroup,
   Keyword,
   ArticleCategories,
   ArticleMeta,
+  LinkMixin,
 } from 'jats-tags';
 import type { Logger } from 'myst-cli-utils';
 import { tic } from 'myst-cli-utils';
@@ -71,10 +73,14 @@ export class Jats {
     }
     const { declaration, elements } = this.raw;
     this.declaration = declaration?.attributes;
+    if (elements?.length && elements[0].type !== 'doctype') {
+      this.log?.warn('JATS is missing DOCTYPE declaration');
+      elements.unshift({ type: 'doctype' });
+    }
     if (
       !(elements?.length === 2 && elements[0].type === 'doctype' && hasSingleArticle(elements[1]))
     ) {
-      throw new Error('Element <article> is not the only element of the JATS');
+      throw new Error('JATS must be structured as <!DOCTYPE><article>...</article>');
     }
     this.doctype = elements[0].doctype;
     const converted = convertToUnist(elements[1]);
@@ -86,21 +92,66 @@ export class Jats {
     const title = this.articleTitle;
     const subtitle = this.articleSubtitle;
     const short_title = this.articleAltTitle;
-    const date = this.publicationDate;
-    const authors = this.articleAuthors;
+    let date: string | undefined;
+    if (this.publicationDate) {
+      const pubDate = toDate(this.publicationDate);
+      if (pubDate) {
+        const year = pubDate.getFullYear();
+        const month = (pubDate.getMonth() + 1).toString().padStart(2, '0');
+        const day = pubDate.getDate().toString().padStart(2, '0');
+        date = `${year}-${month}-${day}`;
+      }
+    }
+    const authors = this.articleAuthors?.map((auth) => {
+      return processContributor(auth);
+    });
+    const affiliations = this.articleAffiliations?.map((aff) => {
+      return processAffiliation(aff);
+    });
+    const keywords = this.keywords?.map((k) => toText(k)) ?? [];
     const firstSubject = select(Tags.subject, this.articleCategories ?? this.front);
     const journalTitle = select(Tags.journalTitle, this.front);
-    return {
-      title: title ? toText(title) : undefined,
-      subtitle: subtitle ? toText(subtitle) : undefined,
-      short_title: short_title ? toText(short_title) : undefined,
-      doi: this.doi ?? undefined,
-      date: date ? toDate(date)?.toISOString() : undefined,
-      authors: authors?.map((a) => authorAndAffiliation(a, this.tree)),
-      keywords: this.keywords?.map((k) => toText(k)),
-      venue: journalTitle ? { title: toText(journalTitle) } : undefined,
-      subject: firstSubject ? toText(firstSubject) : undefined,
-    };
+    const license = this.license;
+    let licenseString: string | null = null;
+    if (license?.['xlink:href']) {
+      licenseString = license['xlink:href'];
+    } else if (select('[type=ali:license_ref]', license)) {
+      licenseString = toText(select('[type=ali:license_ref]', license));
+    } else if (selectAll('ext-link', license).length === 1) {
+      // this should only happen if there is only one ext-link
+      licenseString = (select('ext-link', license) as LinkMixin)['xlink:href'] ?? null;
+    } else if (license) {
+      licenseString = toText(license);
+    }
+    let openAccess: boolean | undefined;
+    const licenseType = license?.['license-type']?.toLowerCase();
+    if (licenseType && ['openaccess', 'open-access'].includes(licenseType)) {
+      openAccess = true;
+    } else if (licenseString?.match(/^\s*Open Access\s*This/)) {
+      licenseString = licenseString.replace(/^\s*Open Access\s*/, '');
+      openAccess = true;
+    } else if (licenseString?.toLowerCase().startsWith('this is an open access article')) {
+      openAccess = true;
+    }
+    const frontmatter: PageFrontmatter = validatePageFrontmatter(
+      {
+        title: title ? toText(title) : undefined,
+        subtitle: subtitle ? toText(subtitle) : undefined,
+        short_title: short_title ? toText(short_title) : undefined,
+        doi: this.doi ?? undefined,
+        date,
+        authors: authors.length ? authors : undefined,
+        // editors,
+        affiliations: affiliations.length ? affiliations : undefined,
+        keywords: keywords.length ? keywords : undefined,
+        venue: journalTitle ? { title: toText(journalTitle) } : undefined,
+        subject: firstSubject ? toText(firstSubject) : undefined,
+        license: licenseString ?? undefined,
+        open_access: openAccess,
+      },
+      { property: 'frontmatter', messages: {} },
+    );
+    return frontmatter;
   }
 
   get front(): Front | undefined {
@@ -189,7 +240,19 @@ export class Jats {
   }
 
   get articleAuthors(): Contrib[] {
-    return selectAll(Tags.contrib, this.contribGroup) as Contrib[];
+    const contribs = selectAll(Tags.contrib, {
+      type: 'contribGroups',
+      children: this.contribGroups,
+    }) as Contrib[];
+    const authors = contribs.filter((contrib) => {
+      const contribType = contrib['contrib-type'];
+      return !contribType || contribType === 'author';
+    });
+    return authors;
+  }
+
+  get articleAffiliations(): Affiliation[] {
+    return selectAll(`${Tags.aff}[id]`, this.front) as Affiliation[];
   }
 
   get body(): Body | undefined {

@@ -50,4 +50,6 @@ export enum RefType {
   'table' = 'table',
   /** Table footnote */
   'tableFn' = 'table-fn',
+  /** "ref" is _not_ a recommended ref-type, but is used encountered in JATS*/
+  'ref' = 'ref',
 }

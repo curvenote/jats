@@ -24,53 +24,41 @@
     "type": "git",
     "url": "git+https://github.com/curvenote/jats.git"
   },
-  "bin": {
-    "jats": "./dist/jats.cjs"
-  },
   "scripts": {
     "copy:version": "echo \"const version = '\"$npm_package_version\"';\nexport default version;\" > src/version.ts",
     "clean": "rm -rf dist",
-    "unlink": "npm uninstall -g jats-xml;",
-    "link": "npm run unlink; npm link;",
-    "dev": "npm run copy:version && npm run link && esbuild src/cli/index.ts --bundle --outfile=dist/jats.cjs --platform=node --watch",
     "test": "npm run copy:version && vitest run",
     "test:watch": "npm run copy:version && vitest watch",
     "lint": "eslint \"src/**/*.ts*\" -c ./.eslintrc.cjs",
     "lint:format": "prettier --check \"src/**/*.{ts,tsx,md}\"",
     "build:esm": "tsc",
-    "build:cli": "esbuild src/cli/index.ts --bundle --outfile=dist/jats.cjs --platform=node",
-    "build": "npm-run-all -l clean copy:version -p build:esm build:cli"
+    "build": "npm-run-all -l clean copy:version -p build:esm"
   },
   "bugs": {
     "url": "https://github.com/curvenote/jats/issues"
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
-    "doi-utils": "^2.0.0",
-    "fair-principles": "^2.0.0",
-    "jats-fetch": "^1.0.9",
+    "doi-utils": "^2.0.3",
     "jats-tags": "^1.0.9",
     "jats-utils": "^1.0.9",
-    "js-yaml": "^4.1.0",
+    "myst-cli-utils": "^2.0.11",
+    "myst-common": "^1.7.5",
+    "myst-frontmatter": "^1.7.5",
     "node-fetch": "^3.3.1",
-    "unist-util-is": "^5.2.1",
-    "unist-util-remove": "^3.1.0",
     "unist-util-select": "^4.0.0",
+    "unist-util-remove": "4.0.0",
     "which": "^3.0.1",
     "xml-js": "^1.6.11"
   },
   "peerDependencies": {
-    "chalk": "^5.2.0",
-    "commander": "^10.0.1"
+    "chalk": "^5.2.0"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.0",
     "@types/js-yaml": "^4.0.5",
     "@types/which": "^3.0.0",
     "chalk": "^5.2.0",
-    "commander": "^10.0.1",
-    "myst-cli-utils": "^2.0.0",
-    "myst-common": "^1.0.0",
-    "myst-frontmatter": "^1.0.0"
+    "js-yaml": "^4.1.0"
   }
 }

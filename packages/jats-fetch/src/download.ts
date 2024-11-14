@@ -1,11 +1,24 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { doi } from 'doi-utils';
-import fetch from 'node-fetch';
 import type { ISession } from 'myst-cli-utils';
 import { isUrl, tic } from 'myst-cli-utils';
-
-import type { ResolutionOptions } from './types.js';
+import {
+  constructJatsUrlFromPubMedCentral,
+  getDataFromPMC,
+  getListingsFile,
+  getPubMedJatsFromData,
+  getPubMedJatsFromS3,
+} from './pubmed.js';
 import { customResolveJatsUrlFromDoi } from './resolvers.js';
+import type { DownloadResult, ResolutionOptions } from './types.js';
+import { defaultFetcher } from './utils.js';
 
+/**
+ * Return data from URL using xml content type
+ *
+ * Throws on bad response and warns if response content type is not xml
+ */
 async function downloadFromUrl(
   session: ISession,
   jatsUrl: string,
@@ -42,17 +55,6 @@ type DoiLink = {
   'intended-application': 'text-mining' | 'similarity-checking' | string;
 };
 
-function defaultFetcher(url: string, kind?: 'json' | 'xml') {
-  switch (kind) {
-    case 'json':
-      return fetch(url, { headers: [['Accept', 'application/json']] });
-    case 'xml':
-      return fetch(url, { headers: [['Accept', 'application/xml']] });
-    default:
-      return fetch(url);
-  }
-}
-
 /**
  * There are 5.8M or so DOIs that have a full XML record:
  *
@@ -60,7 +62,7 @@ function defaultFetcher(url: string, kind?: 'json' | 'xml') {
  *
  * This function tries to find the correct URL for the record.
  */
-async function checkIfDoiHasJats(
+async function getJatsUrlFromDoi(
   session: ISession,
   urlOrDoi: string,
   opts: ResolutionOptions,
@@ -92,98 +94,28 @@ async function checkIfDoiHasJats(
   return undefined;
 }
 
-type OpenAlexWork = {
-  ids: {
-    openalex?: string;
-    doi?: string;
-    mag?: string;
-    pmid?: string;
-    pmcid?: string;
-  };
-};
-
 /**
- * https://www.ncbi.nlm.nih.gov/pmc/tools/id-converter-api/
+ * Attempt to download JATS from provided input
+ *
+ * `urlOrDoi` may be (1) a local file, in which case, the file content is
+ * directly returned, (2) PubMed ID, PubMed Central ID, or DOI, in which case,
+ * possible download links are constructed and followed, or (3) a direct
+ * download URL, in which case, the content is fetched.
  */
-export async function convertPMID2PMCID(
-  session: ISession,
-  PMID: string,
-  opts: ResolutionOptions,
-): Promise<string | undefined> {
-  if (PMID.startsWith('https://')) {
-    const idPart = new URL(PMID).pathname.slice(1);
-    session.log.debug(`Extract ${PMID} to ${idPart}`);
-    return convertPMID2PMCID(session, idPart, opts);
-  }
-  const toc = tic();
-  const converter = 'https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/';
-  const resp = await (opts?.fetcher ?? defaultFetcher)(
-    `${converter}?tool=jats-xml&format=json&ids=${PMID}`,
-    'json',
-  );
-  if (!resp.ok) {
-    // Silently return -- other functions can try!
-    session.log.debug(`Failed to convert PubMedID: ${PMID}`);
-    return;
-  }
-  const data = await resp.json();
-  const PMCID = data?.records?.[0]?.pmcid;
-  session.log.debug(toc(`Used nih.gov to transform ${PMID} to ${PMCID} in %s.`));
-  return PMCID;
-}
-
-function pubMedCentralJats(PMCID: string) {
-  const normalized = PMCID.replace(/^PMC:?/, '');
-  return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=${normalized}`;
-}
-
-export async function checkIfPubMedCentralHasJats(
-  session: ISession,
-  urlOrDoi: string,
-  opts: ResolutionOptions,
-): Promise<string | undefined> {
-  if (urlOrDoi.match(/^PMC:?([0-9]+)$/)) return pubMedCentralJats(urlOrDoi);
-  if (!doi.validate(urlOrDoi)) return;
-  const toc = tic();
-  const doiUrl = doi.buildUrl(urlOrDoi) as string;
-  session.log.debug(`Attempting to resolve PMCID using OpenAlex from ${doiUrl}`);
-  const openAlexUrl = `https://api.openalex.org/works/${doiUrl}`;
-  const resp = await (opts?.fetcher ?? defaultFetcher)(openAlexUrl, 'json');
-  if (!resp.ok) {
-    // Silently return -- other functions can try!
-    session.log.debug(`Failed to lookup on OpenAlex: ${openAlexUrl}`);
-    return;
-  }
-  const data = (await resp.json()) as OpenAlexWork;
-  const PMID = data?.ids?.pmid;
-  let PMCID = data?.ids?.pmcid;
-  if (!PMCID && !!PMID) {
-    session.log.debug(
-      toc(`OpenAlex resolved ${data?.ids.openalex} in %s. There is no PMCID, but there is a PMID`),
-    );
-    PMCID = await convertPMID2PMCID(session, PMID, opts);
-    if (!PMCID) {
-      session.log.debug(toc(`PubMed does not have a record of ${PMID}`));
-      return;
-    }
-  }
-  if (!PMCID) {
-    session.log.debug(toc(`OpenAlex resolved ${data?.ids.openalex} in %s, but there is no PMCID`));
-    return;
-  }
-  session.log.debug(toc(`OpenAlex resolved in %s, with a PMCID of ${PMCID}`));
-  return pubMedCentralJats(PMCID);
-}
-
 export async function downloadJatsFromUrl(
   session: ISession,
   urlOrDoi: string,
   opts: ResolutionOptions = {},
-): Promise<{ success: boolean; source: string; data?: string }> {
+): Promise<DownloadResult> {
+  if (fs.existsSync(urlOrDoi)) {
+    session.log.debug(`JATS returned from local file ${urlOrDoi}`);
+    const data = fs.readFileSync(urlOrDoi).toString();
+    return { success: true, source: urlOrDoi, data };
+  }
   const expectedUrls = (
     await Promise.all([
-      checkIfPubMedCentralHasJats(session, urlOrDoi, opts),
-      checkIfDoiHasJats(session, urlOrDoi, opts),
+      constructJatsUrlFromPubMedCentral(session, urlOrDoi, opts),
+      getJatsUrlFromDoi(session, urlOrDoi, opts),
     ])
   ).filter((u): u is string => !!u);
   if (expectedUrls.length > 0) {
@@ -213,4 +145,64 @@ export async function downloadJatsFromUrl(
     return { success: true, source: urlOrDoi, data };
   }
   throw new Error(`Could not find ${urlOrDoi} locally, and it doesn't look like a URL or DOI`);
+}
+
+/**
+ * Given an input url/doi/identifier, attempt to download JATS XML and, optionally, dependent data
+ *
+ * Allowed inputs are DOI, PMCID, PubMed ID (which will be resolved to PMCID), or a direct JATS download URL
+ *
+ * `output` may be a destination folder or xml filename. If `data` is `true`, this function will also
+ * attempt to fetch dependent data; currently, this flag is only supported for open-access PMC articles.
+ * The `listing` file to look up data location may also be specified; otherwise, it will be downloaded
+ * and cached.
+ */
+export async function jatsFetch(
+  session: ISession,
+  input: string,
+  opts: { output?: string; data?: boolean; listing?: string },
+) {
+  if (input === 'listing' && !opts.data && !(opts.output && opts.listing)) {
+    const dest = await getListingsFile(session, opts.output ?? opts.listing);
+    session.log.info(`PMC Open Access listing saved to ${dest}`);
+    return;
+  }
+  let output = opts.output ?? (opts.data ? `${input}` : '.');
+  const filename = input.startsWith('PMC') ? `${input}.xml` : 'jats.xml';
+  output = path.join(output, filename);
+  if (path.extname(output) && !['.xml', '.jats'].includes(path.extname(output).toLowerCase())) {
+    session.log.error(`Output must be an XML file or a directory`);
+    process.exit(1);
+  }
+  let result: DownloadResult | undefined;
+  try {
+    result = await downloadJatsFromUrl(session, input);
+  } catch {
+    // Still options here if input is PMC
+  }
+  // This needs to do better with doi/pmc/pm conversions
+  if (!result?.data && input.startsWith('PMC')) {
+    result = await getPubMedJatsFromS3(session, input);
+    if (!result?.data) {
+      result = await getPubMedJatsFromData(session, input, path.dirname(output), opts.listing);
+    }
+  }
+  // Last, could try downloading zip...
+  if (!result?.data) {
+    session.log.error(`Unable to resolve JATS XML content from ${input}`);
+    process.exit(1);
+  }
+  if (!path.extname(output)) {
+    fs.mkdirSync(output, { recursive: true });
+  } else {
+    fs.mkdirSync(path.dirname(output), { recursive: true });
+  }
+  fs.writeFileSync(output, result.data);
+  session.log.info(`JATS written to ${output}`);
+  if (!opts.data) return;
+  if (input.startsWith('PMC')) {
+    await getDataFromPMC(session, input, path.dirname(output), opts.listing);
+  } else {
+    session.log.error('Data may only be downloaded for PMC articles');
+  }
 }

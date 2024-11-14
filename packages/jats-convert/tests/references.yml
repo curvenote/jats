@@ -1,0 +1,61 @@
+cases:
+  - title: pub-id-type doi returns doi
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><body><xref rid="B5-molecules-13-00204" ref-type="bibr">1</xref></body><back>
+      <ref-list>
+      <ref id="B5-molecules-13-00204"><label>5.</label>
+      <element-citation publication-type="journal">
+      <person-group person-group-type="author"><name><surname>Lavis</surname><given-names>L. D.</given-names></name><name><surname>Chao</surname><given-names>T. Y.</given-names></name><name><surname>Raines</surname><given-names>R. T.</given-names></name></person-group>
+      <article-title>Latent blue and red fluorophores based on the trimethyl lock</article-title>
+      <source>ChemBioChem</source>
+      <year>2006</year>
+      <volume>7</volume>
+      <fpage>1151</fpage>
+      <lpage>1154</lpage>
+      <pub-id pub-id-type="doi">10.1002/cbic.200500559</pub-id>
+      </element-citation>
+      </ref>
+      </ref-list>
+      </back></article>
+    doi: https://doi.org/10.1002/cbic.200500559
+  - title: pub-id-type doi with ref-type="ref" returns doi
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><body><xref rid="B5-molecules-13-00204" ref-type="ref">1</xref></body><back>
+      <ref-list>
+      <ref id="B5-molecules-13-00204"><label>5.</label>
+      <element-citation publication-type="journal">
+      <person-group person-group-type="author"><name><surname>Lavis</surname><given-names>L. D.</given-names></name><name><surname>Chao</surname><given-names>T. Y.</given-names></name><name><surname>Raines</surname><given-names>R. T.</given-names></name></person-group>
+      <article-title>Latent blue and red fluorophores based on the trimethyl lock</article-title>
+      <source>ChemBioChem</source>
+      <year>2006</year>
+      <volume>7</volume>
+      <fpage>1151</fpage>
+      <lpage>1154</lpage>
+      <pub-id pub-id-type="doi">10.1002/cbic.200500559</pub-id>
+      </element-citation>
+      </ref>
+      </ref-list>
+      </back></article>
+    doi: https://doi.org/10.1002/cbic.200500559
+  - title: pub-id-type pmid returns doi
+    jats: |-
+      <!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.0 20120330//EN" "JATS-archivearticle1.dtd">
+      <article><body><xref rid="B5-molecules-13-00204" ref-type="bibr">1</xref></body><back>
+      <ref-list>
+      <ref id="B5-molecules-13-00204"><label>5.</label>
+      <element-citation publication-type="journal">
+      <person-group person-group-type="author"><name><surname>Lavis</surname><given-names>L. D.</given-names></name><name><surname>Chao</surname><given-names>T. Y.</given-names></name><name><surname>Raines</surname><given-names>R. T.</given-names></name></person-group>
+      <article-title>Latent blue and red fluorophores based on the trimethyl lock</article-title>
+      <source>ChemBioChem</source>
+      <year>2006</year>
+      <volume>7</volume>
+      <fpage>1151</fpage>
+      <lpage>1154</lpage>
+      <pub-id pub-id-type="pmid">16755624</pub-id>
+      </element-citation>
+      </ref>
+      </ref-list>
+      </back></article>
+    doi: https://doi.org/10.1002/cbic.200500559

@@ -5,7 +5,7 @@ import { select } from 'unist-util-select';
 import { inferOptions, Jats } from '../src';
 import { Tags } from 'jats-tags';
 import { formatDate, toDate } from 'jats-utils';
-import { authorAndAffiliation } from '../src/utils';
+import { processAffiliation, processContributor } from '../src/utils';
 
 describe('Basic JATS read', () => {
   test('read elife JATS', async () => {
@@ -45,13 +45,19 @@ describe('Basic JATS read', () => {
     expect(jats.articleAuthors.length).toBe(12);
     expect(toText(select(Tags.surname, jats.articleAuthors[0]))).toBe('Lesner');
     expect(toText(select(Tags.surname, jats.articleAuthors[11]))).toBe('Mishra');
-    const author = authorAndAffiliation(jats.articleAuthors[0], jats.tree);
+    const author = processContributor(jats.articleAuthors[0]);
+    const affiliation = processAffiliation(jats.articleAffiliations[0]);
     expect(author.name).toBe('Nicholas P Lesner');
     expect(author.orcid).toBe('0000-0001-9734-8828');
     expect(author.affiliations?.length).toBe(1);
-    expect(author.affiliations?.[0]).toBe(
-      "Children's Medical Center Research Institute, University of Texas Southwestern Medical Center",
-    );
+    expect(affiliation).toEqual({
+      id: 'aff1',
+      ror: 'https://ror.org/00t9vx427',
+      institution:
+        "Children's Medical Center Research Institute, University of Texas Southwestern Medical Center",
+      city: 'Dallas',
+      country: 'United States',
+    });
     expect(jats.license?.['xlink:href']).toBe('http://creativecommons.org/licenses/by/4.0/');
     expect(inferOptions(file)).toEqual({
       jats: '1.2',
