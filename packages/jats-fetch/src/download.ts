@@ -187,7 +187,6 @@ export async function jatsFetch(
       result = await getPubMedJatsFromData(session, input, path.dirname(output), opts.listing);
     }
   }
-  // Last, could try downloading zip...
   if (!result?.data) {
     session.log.error(`Unable to resolve JATS XML content from ${input}`);
     process.exit(1);
