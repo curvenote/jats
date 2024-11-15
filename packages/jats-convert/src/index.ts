@@ -438,7 +438,7 @@ const handlers: Record<string, Handler> = {
       }
       default: {
         state.renderInline(node, 'crossReference', { identifier: node.rid });
-        state.warn(`Unknown ref-type of ${refType}`, node);
+        state.warn(`Unknown ref-type of ${refType}`);
         return;
       }
     }
@@ -647,7 +647,6 @@ export async function jatsConvertTransform(
 ): Promise<{
   tree: Root;
   jats: Jats;
-  file: VFile;
   references: any;
   frontmatter: ProjectFrontmatter;
 }> {
@@ -718,7 +717,7 @@ export async function jatsConvertTransform(
       myst: selectAll('footnoteDefinition', tree).length,
     };
   }
-  return { tree, jats, file, references, frontmatter }; //, kind };
+  return { tree, jats, references, frontmatter }; //, kind };
 }
 
 export async function jatsConvert(
