@@ -1,5 +1,6 @@
 import { Command, Option } from 'commander';
 import { jatsConvert } from 'jats-convert';
+import { clirun, getSession } from 'myst-cli-utils';
 
 function makeConvertCLI(program: Command) {
   const command = new Command('convert')
@@ -13,17 +14,17 @@ function makeConvertCLI(program: Command) {
     )
     .addOption(
       new Option(
-        '--no-dois, --no-doi',
+        '--no-doi, --no-dois',
         'By default, DOIs are used for references when available, to be later resolved against doi.org. This option disables that behavior and creates bibtex entries for citations with DOIs.',
       ),
     )
     .addOption(
       new Option(
-        '--no-bibtex, --no-bib',
+        '--no-bib, --no-bibtex',
         'By default, a bibtex file will be written with referenced citations. This option prevents writing that file',
       ),
     )
-    .action(jatsConvert);
+    .action(clirun(jatsConvert, { program, getSession }));
   return command;
 }
 

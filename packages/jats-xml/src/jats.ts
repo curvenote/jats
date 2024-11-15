@@ -133,12 +133,15 @@ export class Jats {
     } else if (licenseString?.toLowerCase().startsWith('this is an open access article')) {
       openAccess = true;
     }
+    const pmc = this.pmc;
+    const identifiers = pmc ? { pmcid: `PMC${pmc}` } : undefined;
     const frontmatter: PageFrontmatter = validatePageFrontmatter(
       {
         title: title ? toText(title) : undefined,
         subtitle: subtitle ? toText(subtitle) : undefined,
         short_title: short_title ? toText(short_title) : undefined,
         doi: this.doi ?? undefined,
+        identifiers,
         date,
         authors: authors.length ? authors : undefined,
         // editors,

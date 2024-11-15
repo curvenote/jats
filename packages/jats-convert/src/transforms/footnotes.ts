@@ -14,7 +14,7 @@ export function backToBodyTransform(jats: Jats) {
     return ['fn-group', 'sec', 'ack'].includes(node.type);
   });
   if (!jats.body?.children || backNodes.length === 0) return;
-  jats.body.children.push({ type: 'thematicBreak' }, ...copyNode(backNodes));
+  jats.body.children.push({ type: 'hr' }, ...copyNode(backNodes));
   backNodes.forEach((node) => {
     node.type = '__delete__';
   });

@@ -12,6 +12,7 @@ import { select, selectAll } from 'unist-util-select';
 import { u } from 'unist-builder';
 import type { License, LinkMixin } from 'jats-tags';
 import { RefType } from 'jats-tags';
+import type { ISession } from 'jats-xml';
 import { Jats } from 'jats-xml';
 import { MathMLToLaTeX } from 'mathml-to-latex';
 import { js2xml } from 'xml-js';
@@ -26,9 +27,10 @@ import { abstractTransform, descriptionFromAbstract } from './transforms/abstrac
 import { processJatsReferences, resolveJatsCitations } from './transforms/references.js';
 import { backToBodyTransform } from './transforms/footnotes.js';
 import version from './version.js';
-import { toText } from './utils.js';
+import { logMessagesFromVFile, toText } from './utils.js';
 import { inlineCitationsTransform } from './myst/inlineCitations.js';
 import { abbreviationSectionTransform } from './transforms/abbreviations.js';
+import { floatToEndTransform } from './transforms/supplementary.js';
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
@@ -127,10 +129,6 @@ const handlers: Record<string, Handler> = {
   },
   ['list-item'](node, state) {
     state.renderInline(node, 'listItem');
-  },
-  thematicBreak(node, state) {
-    // This comes from intermediate transforms, not JATS source
-    state.addLeaf('thematicBreak');
   },
   ['inline-formula'](node, state) {
     const texMath = texMathFromNode(node);
@@ -325,6 +323,14 @@ const handlers: Record<string, Handler> = {
     if (state.data.isInContainer) return;
     state.addLeaf('thematicBreak');
   },
+  alternatives(node, state) {
+    const choice = node.children?.find((child) => !!state.handlers[child.type]);
+    if (!choice) {
+      state.error(`No supported types in 'alternatives' node`);
+    } else {
+      state.handlers[choice.type](choice, state, node);
+    }
+  },
   break(node, state) {
     state.addLeaf('break');
   },
@@ -332,75 +338,6 @@ const handlers: Record<string, Handler> = {
     // TODO: Not just ignore things marked as named-content
     state.renderChildren(node);
   },
-  // container(node, state) {
-  //   state.data.isInContainer = true;
-  //   switch (node.kind) {
-  //     case 'figure': {
-  //       state.renderInline(node, 'fig');
-  //       break;
-  //     }
-  //     case 'table': {
-  //       state.renderInline(node, 'table-wrap');
-  //       break;
-  //     }
-  //     case 'quote': {
-  //       // This is transformed in containers.ts
-  //       state.renderChildren(node);
-  //       break;
-  //     }
-  //     case 'code': {
-  //       // This is transformed in containers.ts
-  //       state.renderInline(node, 'boxed-text', { 'content-type': node.kind });
-  //       break;
-  //     }
-  //     default: {
-  //       state.error(`Unhandled container kind of ${node.kind}`, node, 'container');
-  //       state.renderChildren(node);
-  //     }
-  //   }
-  //   delete state.data.isInContainer;
-  // },
-  // caption(node, state) {
-  //   state.renderInline(node, 'caption');
-  // },
-  // captionNumber(node, state) {
-  //   state.renderInline(node, 'label');
-  // },
-  // crossReference(node, state) {
-  //   // Look up reference and add the text
-  //   const { identifier, kind } = node as CrossReference;
-  //   const attrs: Attributes = { 'ref-type': referenceKindToRefType(kind), rid: identifier };
-  //   if (attrs['ref-type'] === RefType.custom && kind) {
-  //     attrs['custom-type'] = kind;
-  //   }
-  //   state.renderInline(node, 'xref', attrs);
-  // },
-  // citeGroup(node, state) {
-  //   if (state.options.citestyle === 'numerical-only') {
-  //     state.write('\\cite{');
-  //   } else if (state.options.bibliography === 'biblatex') {
-  //     const command = node.kind === 'narrative' ? 'textcite' : 'parencite';
-  //     state.write(`\\${command}{`);
-  //   } else {
-  //     const tp = node.kind === 'narrative' ? 't' : 'p';
-  //     state.write(`\\cite${tp}{`);
-  //   }
-  //   state.renderChildren(node, true, ', ');
-  //   state.write('}');
-  // },
-  // cite(node, state, parent) {
-  //   if (!state.options.bibliography) {
-  //     state.usePackages('natbib');
-  //     // Don't include biblatex in the package list
-  //   }
-  //   if (parent.type === 'citeGroup') {
-  //     state.write(node.label);
-  //   } else if (state.options.bibliography === 'biblatex') {
-  //     state.write(`\\textcite{${node.label}}`);
-  //   } else {
-  //     state.write(`\\cite{${node.label}}`);
-  //   }
-  // },
   ['fn-group'](node, state) {
     state.renderChildren(node);
   },
@@ -422,6 +359,7 @@ const handlers: Record<string, Handler> = {
           kind: 'narrative',
         });
         return;
+      case RefType.supplementaryMaterial:
       case RefType.sec:
       case RefType.fig:
       case RefType.dispFormula:
@@ -437,15 +375,25 @@ const handlers: Record<string, Handler> = {
       }
       default: {
         state.renderInline(node, 'crossReference', { identifier: node.rid });
-        state.warn(`Unknown ref-type of ${refType}`, node);
+        state.warn(`Unknown ref-type of ${refType}`);
         return;
       }
     }
   },
   ['supplementary-material'](node, state) {
+    if (node.id) {
+      const { label, identifier } = normalizeLabel(node.id) ?? {};
+      state.openNode('div', { label, identifier });
+    }
     state.renderChildren(node);
+    if (node.id) {
+      state.closeNode();
+    }
   },
   media(node, state) {
+    state.renderInline(node, 'link', { url: node['xlink:href'] });
+  },
+  ['inline-supplementary-material'](node, state) {
     state.renderInline(node, 'link', { url: node['xlink:href'] });
   },
   caption(node, state) {
@@ -488,19 +436,17 @@ export class JatsParser implements IJatsParser {
     return this.stack[this.stack.length - 1];
   }
 
-  warn(message: string, node: GenericNode, source?: string, opts?: MessageInfo) {
+  warn(message: string, source?: string, opts?: MessageInfo) {
     fileError(this.file, message, {
       ...opts,
-      node,
       source: source ? `jats-convert:${source}` : 'jats-convert',
       ruleId: RuleId.jatsParses,
     });
   }
 
-  error(message: string, node: GenericNode, source?: string, opts?: MessageInfo) {
+  error(message: string, source?: string, opts?: MessageInfo) {
     fileError(this.file, message, {
       ...opts,
-      node,
       source: source ? `jats-convert:${source}` : 'jats-convert',
       ruleId: RuleId.jatsParses,
     });
@@ -534,10 +480,7 @@ export class JatsParser implements IJatsParser {
         handler(child, this, node);
       } else {
         this.unhandled.push(child.type);
-        fileError(this.file, `Unhandled JATS conversion for node of "${child.type}"`, {
-          source: 'jats-convert',
-          ruleId: RuleId.jatsParses,
-        });
+        this.error(`Unhandled JATS conversion for node of "${child.type}"`);
       }
     });
   }
@@ -651,7 +594,6 @@ export async function jatsConvertTransform(
 ): Promise<{
   tree: Root;
   jats: Jats;
-  file: VFile;
   references: any;
   frontmatter: ProjectFrontmatter;
 }> {
@@ -677,13 +619,14 @@ export async function jatsConvertTransform(
     opts.logInfo.license = licenseString;
   }
   const { frontmatter } = jats;
-  const file = new VFile();
+  const file = opts?.vfile ?? new VFile();
   const refLookup = await processJatsReferences(jats, opts);
+  floatToEndTransform(jats);
   backToBodyTransform(jats);
   const pipe = unified().use(jatsConvertPlugin, jats, opts);
-  const vfile = pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
-  const references = (vfile as any).result.references as JatsResult['references'];
-  const tree = (vfile as any).result.tree as Root;
+  pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
+  const references = (file as any).result.references as JatsResult['references'];
+  const tree = (file as any).result.tree as Root;
   resolveJatsCitations(tree, refLookup);
   inlineCitationsTransform(tree, [...Object.keys(references.data)]);
   abbreviationSectionTransform(tree, frontmatter);
@@ -722,21 +665,26 @@ export async function jatsConvertTransform(
       myst: selectAll('footnoteDefinition', tree).length,
     };
   }
-  return { tree, jats, file, references, frontmatter }; //, kind };
+  return { tree, jats, references, frontmatter }; //, kind };
 }
 
 export async function jatsConvert(
+  session: ISession,
   input: string,
   opts?: { frontmatter?: 'page' | 'project'; dois?: boolean; bibtex?: boolean },
 ) {
   const logInfo: Record<string, any> = { jatsVersion: version };
   const dir = path.dirname(input);
+  const vfile = new VFile();
+  vfile.path = input;
   const { tree, frontmatter } = await jatsConvertTransform(fs.readFileSync(input).toString(), {
+    vfile,
     dir,
     logInfo,
     dois: opts?.dois,
     bibtex: opts?.bibtex,
   });
+  logMessagesFromVFile(session, vfile);
   const basename = path.basename(input, path.extname(input));
   const mystJson = path.join(dir, `${basename}.myst.json`);
   const mystYml = path.join(dir, 'myst.yml');
@@ -762,9 +710,15 @@ export async function jatsConvert(
       // console.log(`writing new myst.yml file`);
       fs.writeFileSync(mystYml, yaml.dump({ version: 1, project: frontmatter, site: {} }));
     }
-    fs.writeFileSync(mystJson, JSON.stringify({ mdast: tree }, null, 2));
+    fs.writeFileSync(
+      mystJson,
+      JSON.stringify({ mdast: tree, frontmatter: { title: frontmatter.title } }, null, 2),
+    );
   } else {
     // console.log(`ignoring frontmatter`);
-    fs.writeFileSync(mystJson, JSON.stringify({ mdast: tree }, null, 2));
+    fs.writeFileSync(
+      mystJson,
+      JSON.stringify({ mdast: tree, frontmatter: { title: frontmatter.title } }, null, 2),
+    );
   }
 }
