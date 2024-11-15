@@ -326,6 +326,14 @@ const handlers: Record<string, Handler> = {
     if (state.data.isInContainer) return;
     state.addLeaf('thematicBreak');
   },
+  alternatives(node, state) {
+    const choice = node.children?.find((child) => !!state.handlers[child.type]);
+    if (!choice) {
+      state.error(`No supported types in 'alternatives' node`);
+    } else {
+      state.handlers[choice.type](choice, state, node);
+    }
+  },
   break(node, state) {
     state.addLeaf('break');
   },
@@ -762,9 +770,15 @@ export async function jatsConvert(
       // console.log(`writing new myst.yml file`);
       fs.writeFileSync(mystYml, yaml.dump({ version: 1, project: frontmatter, site: {} }));
     }
-    fs.writeFileSync(mystJson, JSON.stringify({ mdast: tree }, null, 2));
+    fs.writeFileSync(
+      mystJson,
+      JSON.stringify({ mdast: tree, frontmatter: { title: frontmatter.title } }, null, 2),
+    );
   } else {
     // console.log(`ignoring frontmatter`);
-    fs.writeFileSync(mystJson, JSON.stringify({ mdast: tree }, null, 2));
+    fs.writeFileSync(
+      mystJson,
+      JSON.stringify({ mdast: tree, frontmatter: { title: frontmatter.title } }, null, 2),
+    );
   }
 }
