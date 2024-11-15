@@ -173,8 +173,7 @@ export async function jatsFetch(
     output = path.join(output, filename);
   }
   if (path.extname(output) && !['.xml', '.jats'].includes(path.extname(output).toLowerCase())) {
-    session.log.error(`Output must be an XML file or a directory`);
-    process.exit(1);
+    throw new Error(`Output must be an XML file or a directory`);
   }
   let result: DownloadResult | undefined;
   try {
@@ -190,8 +189,7 @@ export async function jatsFetch(
     }
   }
   if (!result?.data) {
-    session.log.error(`Unable to resolve JATS XML content from ${input}`);
-    process.exit(1);
+    throw new Error(`Unable to resolve JATS XML content from ${input}`);
   }
   if (!path.extname(output)) {
     fs.mkdirSync(output, { recursive: true });
