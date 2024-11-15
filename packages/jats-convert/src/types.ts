@@ -2,6 +2,7 @@ import type { PageFrontmatter } from 'myst-frontmatter';
 import type { GenericNode, MessageInfo } from 'myst-common';
 import type { Jats } from 'jats-xml';
 import type { Root } from 'myst-spec';
+import type { VFile } from 'vfile';
 
 export type Handler = (node: GenericNode, state: IJatsParser, parent: any) => void;
 
@@ -13,6 +14,7 @@ export type JatsResult = {
 export type MathPlugins = Required<PageFrontmatter>['math'];
 
 export type Options = {
+  vfile?: VFile;
   handlers?: Record<string, Handler>;
   dir?: string;
   logInfo?: Record<string, any>;
@@ -27,7 +29,9 @@ export type StateData = {
 };
 
 export interface IJatsParser<D extends Record<string, any> = StateData> {
+  file: VFile;
   data: D;
+  handlers: Record<string, Handler>;
   jats: Jats;
   options: Options;
   stack: GenericNode[];
@@ -38,6 +42,6 @@ export interface IJatsParser<D extends Record<string, any> = StateData> {
   addLeaf: (name: string, attributes?: Record<string, any>) => void;
   openNode: (name: string, attributes?: Record<string, any>) => void;
   closeNode: () => void;
-  warn: (message: string, node: GenericNode, source?: string, opts?: MessageInfo) => void;
-  error: (message: string, node: GenericNode, source?: string, opts?: MessageInfo) => void;
+  warn: (message: string, source?: string, opts?: MessageInfo) => void;
+  error: (message: string, source?: string, opts?: MessageInfo) => void;
 }

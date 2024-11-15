@@ -12,6 +12,7 @@ import { select, selectAll } from 'unist-util-select';
 import { u } from 'unist-builder';
 import type { License, LinkMixin } from 'jats-tags';
 import { RefType } from 'jats-tags';
+import type { ISession } from 'jats-xml';
 import { Jats } from 'jats-xml';
 import { MathMLToLaTeX } from 'mathml-to-latex';
 import { js2xml } from 'xml-js';
@@ -26,7 +27,7 @@ import { abstractTransform, descriptionFromAbstract } from './transforms/abstrac
 import { processJatsReferences, resolveJatsCitations } from './transforms/references.js';
 import { backToBodyTransform } from './transforms/footnotes.js';
 import version from './version.js';
-import { toText } from './utils.js';
+import { logMessagesFromVFile, toText } from './utils.js';
 import { inlineCitationsTransform } from './myst/inlineCitations.js';
 import { abbreviationSectionTransform } from './transforms/abbreviations.js';
 
@@ -488,19 +489,17 @@ export class JatsParser implements IJatsParser {
     return this.stack[this.stack.length - 1];
   }
 
-  warn(message: string, node: GenericNode, source?: string, opts?: MessageInfo) {
+  warn(message: string, source?: string, opts?: MessageInfo) {
     fileError(this.file, message, {
       ...opts,
-      node,
       source: source ? `jats-convert:${source}` : 'jats-convert',
       ruleId: RuleId.jatsParses,
     });
   }
 
-  error(message: string, node: GenericNode, source?: string, opts?: MessageInfo) {
+  error(message: string, source?: string, opts?: MessageInfo) {
     fileError(this.file, message, {
       ...opts,
-      node,
       source: source ? `jats-convert:${source}` : 'jats-convert',
       ruleId: RuleId.jatsParses,
     });
@@ -534,10 +533,7 @@ export class JatsParser implements IJatsParser {
         handler(child, this, node);
       } else {
         this.unhandled.push(child.type);
-        fileError(this.file, `Unhandled JATS conversion for node of "${child.type}"`, {
-          source: 'jats-convert',
-          ruleId: RuleId.jatsParses,
-        });
+        this.error(`Unhandled JATS conversion for node of "${child.type}"`);
       }
     });
   }
@@ -677,13 +673,13 @@ export async function jatsConvertTransform(
     opts.logInfo.license = licenseString;
   }
   const { frontmatter } = jats;
-  const file = new VFile();
+  const file = opts?.vfile ?? new VFile();
   const refLookup = await processJatsReferences(jats, opts);
   backToBodyTransform(jats);
   const pipe = unified().use(jatsConvertPlugin, jats, opts);
-  const vfile = pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
-  const references = (vfile as any).result.references as JatsResult['references'];
-  const tree = (vfile as any).result.tree as Root;
+  pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
+  const references = (file as any).result.references as JatsResult['references'];
+  const tree = (file as any).result.tree as Root;
   resolveJatsCitations(tree, refLookup);
   inlineCitationsTransform(tree, [...Object.keys(references.data)]);
   abbreviationSectionTransform(tree, frontmatter);
@@ -726,17 +722,22 @@ export async function jatsConvertTransform(
 }
 
 export async function jatsConvert(
+  session: ISession,
   input: string,
   opts?: { frontmatter?: 'page' | 'project'; dois?: boolean; bibtex?: boolean },
 ) {
   const logInfo: Record<string, any> = { jatsVersion: version };
   const dir = path.dirname(input);
+  const vfile = new VFile();
+  vfile.path = input;
   const { tree, frontmatter } = await jatsConvertTransform(fs.readFileSync(input).toString(), {
+    vfile,
     dir,
     logInfo,
     dois: opts?.dois,
     bibtex: opts?.bibtex,
   });
+  logMessagesFromVFile(session, vfile);
   const basename = path.basename(input, path.extname(input));
   const mystJson = path.join(dir, `${basename}.myst.json`);
   const mystYml = path.join(dir, 'myst.yml');

@@ -1,5 +1,6 @@
 import { Command, Option } from 'commander';
 import { jatsConvert } from 'jats-convert';
+import { clirun, getSession } from 'myst-cli-utils';
 
 function makeConvertCLI(program: Command) {
   const command = new Command('convert')
@@ -23,7 +24,7 @@ function makeConvertCLI(program: Command) {
         'By default, a bibtex file will be written with referenced citations. This option prevents writing that file',
       ),
     )
-    .action(jatsConvert);
+    .action(clirun(jatsConvert, { program, getSession }));
   return command;
 }
 
