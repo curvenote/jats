@@ -364,16 +364,24 @@ async function downloadAndUnzipPMC(
   session.log.info(`Extracting PMC data from ${dest} to ${outputDir}`);
   // Should use node, something like:
   // fs.createReadStream(dest).pipe(gunzip()).pipe(tar.extract(outputDir));
-  const unzip = makeExecutable(`tar -xf ${dest}`, session.log);
+  const unzip = makeExecutable(`tar -xf ${dest} -C ${outputDir}`, session.log);
   await unzip();
-  const zipContent = fs.readdirSync(outputDir);
+  const zipDir = path.join(outputDir, path.basename(dest).replace(/\.(tar\.gz|tgz)$/, ''));
+  const zipContent = fs.readdirSync(zipDir);
   zipContent
+    .map((file) => {
+      // Un-nest zip content into outputDir
+      const oldPath = path.join(zipDir, file);
+      const newPath = path.join(outputDir, file);
+      fs.renameSync(oldPath, newPath);
+      return newPath;
+    })
     .filter((file) => file.toLowerCase().endsWith('.gif'))
-    .forEach((file) => {
-      const gifFile = path.join(outputDir, file);
+    .forEach((gifFile) => {
       const jpgFile = gifFile.replace(/.gif$/, '.jpg');
       if (fs.existsSync(jpgFile)) fs.rmSync(gifFile);
     });
+  fs.rmdirSync(zipDir);
 }
 
 export async function getDataFromPMC(

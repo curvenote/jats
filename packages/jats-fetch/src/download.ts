@@ -168,8 +168,10 @@ export async function jatsFetch(
     return;
   }
   let output = opts.output ?? (opts.data ? `${input}` : '.');
-  const filename = input.startsWith('PMC') ? `${input}.xml` : 'jats.xml';
-  output = path.join(output, filename);
+  if (!path.extname(output)) {
+    const filename = input.startsWith('PMC') ? `${input}.xml` : 'jats.xml';
+    output = path.join(output, filename);
+  }
   if (path.extname(output) && !['.xml', '.jats'].includes(path.extname(output).toLowerCase())) {
     session.log.error(`Output must be an XML file or a directory`);
     process.exit(1);
