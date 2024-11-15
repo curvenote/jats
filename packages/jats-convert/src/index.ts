@@ -30,6 +30,7 @@ import version from './version.js';
 import { logMessagesFromVFile, toText } from './utils.js';
 import { inlineCitationsTransform } from './myst/inlineCitations.js';
 import { abbreviationSectionTransform } from './transforms/abbreviations.js';
+import { floatToEndTransform } from './transforms/supplementary.js';
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
@@ -128,10 +129,6 @@ const handlers: Record<string, Handler> = {
   },
   ['list-item'](node, state) {
     state.renderInline(node, 'listItem');
-  },
-  thematicBreak(node, state) {
-    // This comes from intermediate transforms, not JATS source
-    state.addLeaf('thematicBreak');
   },
   ['inline-formula'](node, state) {
     const texMath = texMathFromNode(node);
@@ -362,6 +359,7 @@ const handlers: Record<string, Handler> = {
           kind: 'narrative',
         });
         return;
+      case RefType.supplementaryMaterial:
       case RefType.sec:
       case RefType.fig:
       case RefType.dispFormula:
@@ -383,9 +381,19 @@ const handlers: Record<string, Handler> = {
     }
   },
   ['supplementary-material'](node, state) {
+    if (node.id) {
+      const { label, identifier } = normalizeLabel(node.id) ?? {};
+      state.openNode('div', { label, identifier });
+    }
     state.renderChildren(node);
+    if (node.id) {
+      state.closeNode();
+    }
   },
   media(node, state) {
+    state.renderInline(node, 'link', { url: node['xlink:href'] });
+  },
+  ['inline-supplementary-material'](node, state) {
     state.renderInline(node, 'link', { url: node['xlink:href'] });
   },
   caption(node, state) {
@@ -613,6 +621,7 @@ export async function jatsConvertTransform(
   const { frontmatter } = jats;
   const file = opts?.vfile ?? new VFile();
   const refLookup = await processJatsReferences(jats, opts);
+  floatToEndTransform(jats);
   backToBodyTransform(jats);
   const pipe = unified().use(jatsConvertPlugin, jats, opts);
   pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
