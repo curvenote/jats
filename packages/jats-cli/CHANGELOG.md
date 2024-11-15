@@ -1,5 +1,24 @@
 # jats-cli
 
+## 1.0.11
+
+### Patch Changes
+
+- 493f4fa: Ensure logged error messages are reported
+- 493f4fa: Fix cli options so they pass correct values
+- Updated dependencies [493f4fa]
+- Updated dependencies [493f4fa]
+- Updated dependencies [493f4fa]
+- Updated dependencies [493f4fa]
+- Updated dependencies [493f4fa]
+- Updated dependencies [493f4fa]
+- Updated dependencies [493f4fa]
+  - jats-xml@1.0.11
+  - jats-convert@1.0.11
+  - jats-fetch@1.0.11
+  - jats-tags@1.0.11
+  - jats-utils@1.0.11
+
 ## 1.0.10
 
 ### Patch Changes

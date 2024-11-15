@@ -1,5 +1,13 @@
 # jats-xml
 
+## 1.0.11
+
+### Patch Changes
+
+- 493f4fa: Add PMC to frontmatter identifiers
+  - jats-tags@1.0.11
+  - jats-utils@1.0.11
+
 ## 1.0.10
 
 ### Patch Changes

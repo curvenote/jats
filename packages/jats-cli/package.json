@@ -1,6 +1,6 @@
 {
   "name": "jats-cli",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Typescript CLI for with JATS",
   "author": "Rowan Cockett <rowan@curvenote.com>",
   "homepage": "https://github.com/curvenote/jats",
@@ -45,11 +45,11 @@
   "dependencies": {
     "doi-utils": "^2.0.0",
     "fair-principles": "^2.0.0",
-    "jats-convert": "^1.0.10",
-    "jats-fetch": "^1.0.10",
-    "jats-tags": "^1.0.10",
-    "jats-utils": "^1.0.10",
-    "jats-xml": "^1.0.10",
+    "jats-convert": "^1.0.11",
+    "jats-fetch": "^1.0.11",
+    "jats-tags": "^1.0.11",
+    "jats-utils": "^1.0.11",
+    "jats-xml": "^1.0.11",
     "js-yaml": "^4.1.0",
     "unist-util-is": "^5.2.1",
     "unist-util-select": "^4.0.0"

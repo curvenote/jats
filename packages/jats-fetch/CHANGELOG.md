@@ -1,5 +1,12 @@
 # jats-fetch
 
+## 1.0.11
+
+### Patch Changes
+
+- 493f4fa: Respect user-supplied output path
+- 493f4fa: Throw instead of process.exit-ing on fetch errors
+
 ## 1.0.10
 
 ### Patch Changes
