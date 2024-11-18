@@ -127,7 +127,7 @@ cases:
             - type: title
               children:
                 - type: text
-                  value: Acknowledgments
+                  value: My Ack
             - type: text
               value: My acknowledgments
     after:
@@ -149,7 +149,44 @@ cases:
               depth: 1
               children:
                 - type: text
+                  value: My Ack
+            - type: text
+              value: My acknowledgments
+  - title: Ack title removed if redundant
+    before:
+      type: root
+      children:
+        - type: sec
+          children:
+            - type: title
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content
+        - type: ack
+          children:
+            - type: title
+              children:
+                - type: text
                   value: Acknowledgments
+            - type: text
+              value: My acknowledgments
+    after:
+      type: root
+      children:
+        - type: block
+          children:
+            - type: heading
+              depth: 1
+              children:
+                - type: text
+                  value: My Title
+            - type: text
+              value: My content
+        - type: block
+          part: acknowledgments
+          children:
             - type: text
               value: My acknowledgments
   - title: Ack without title is treated as section
