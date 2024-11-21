@@ -282,6 +282,7 @@ export async function getPubMedJatsFromS3(
     session.log.debug(`Not available from open-access S3 bucket: ${pmcid}`);
     return { success: false, source: pmcid };
   } else {
+    session.log.debug(`Fetching PMC JATS from S3 bucket: ${pmcid}`);
     const result = await downloadFileFromS3(client, found.path, OA_CONFIG);
     return result;
   }

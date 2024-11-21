@@ -44,6 +44,9 @@ async function downloadFromUrl(
     );
   }
   const data = await resp.text();
+  if (!data.match(/<article/)) {
+    throw new Error(`XML downloaded from ${jatsUrl} does not look like a JATS article`);
+  }
   session.log.debug(toc(`Fetched document with content-type "${contentType}" in %s`));
   return data;
 }
@@ -129,22 +132,28 @@ export async function downloadJatsFromUrl(
         session.log.debug((error as Error).message);
       }
     }
-    // If there are expected URLs that don't work: see something, say something, etc.
+    // If there are expected URLs that don't work, report them and do not try other resolvers
     return { success: false, source: expectedUrls[0] };
   }
-  if (doi.validate(urlOrDoi)) {
-    const jatsUrl = await customResolveJatsUrlFromDoi(session, urlOrDoi, opts);
-    const data = await downloadFromUrl(session, jatsUrl, opts);
-    return { success: true, source: jatsUrl, data };
+  try {
+    if (doi.validate(urlOrDoi)) {
+      const jatsUrl = await customResolveJatsUrlFromDoi(session, urlOrDoi, opts);
+      const data = await downloadFromUrl(session, jatsUrl, opts);
+      return { success: true, source: jatsUrl, data };
+    }
+    if (isUrl(urlOrDoi)) {
+      session.log.debug(
+        "No resolver matched, and the URL doesn't look like a DOI. We will attempt to download it directly.",
+      );
+      const data = await downloadFromUrl(session, urlOrDoi, opts);
+      return { success: true, source: urlOrDoi, data };
+    }
+  } catch (error) {
+    session.log.debug((error as Error).message);
+    return { success: false, source: urlOrDoi };
   }
-  if (isUrl(urlOrDoi)) {
-    session.log.debug(
-      "No resolver matched, and the URL doesn't look like a DOI. We will attempt to download it directly.",
-    );
-    const data = await downloadFromUrl(session, urlOrDoi, opts);
-    return { success: true, source: urlOrDoi, data };
-  }
-  throw new Error(`Could not find ${urlOrDoi} locally, and it doesn't look like a URL or DOI`);
+  session.log.debug(`Could not find ${urlOrDoi} locally, and it doesn't look like a URL or DOI`);
+  return { success: false, source: urlOrDoi };
 }
 
 /**
@@ -176,17 +185,16 @@ export async function jatsFetch(
     throw new Error(`Output must be an XML file or a directory`);
   }
   let result: DownloadResult | undefined;
-  try {
-    result = await downloadJatsFromUrl(session, input);
-  } catch {
-    // Still options here if input is PMC
-  }
-  // This needs to do better with doi/pmc/pm conversions
-  if (!result?.data && input.startsWith('PMC')) {
+  // We can do better with doi/pubmed -> PMC conversions to use this path more
+  if (input.startsWith('PMC')) {
     result = await getPubMedJatsFromS3(session, input);
-    if (!result?.data) {
-      result = await getPubMedJatsFromData(session, input, path.dirname(output), opts.listing);
-    }
+  }
+  if (!result?.data) {
+    result = await downloadJatsFromUrl(session, input);
+  }
+  if (!result?.data && input.startsWith('PMC')) {
+    // Downloading all the data for just the XML should be last resort
+    result = await getPubMedJatsFromData(session, input, path.dirname(output), opts.listing);
   }
   if (!result?.data) {
     throw new Error(`Unable to resolve JATS XML content from ${input}`);
