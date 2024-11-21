@@ -1,6 +1,6 @@
 {
   "name": "jats-fetch",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Types and utilities for downloading JATS",
   "author": "Rowan Cockett <rowan@curvenote.com>",
   "homepage": "https://github.com/curvenote/jats",

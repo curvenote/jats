@@ -1,5 +1,11 @@
 # jats-fetch
 
+## 1.0.12
+
+### Patch Changes
+
+- 475d4be: Rearrange PMC fetch order and improve download flow
+
 ## 1.0.11
 
 ### Patch Changes

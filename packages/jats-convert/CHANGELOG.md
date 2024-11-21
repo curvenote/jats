@@ -1,5 +1,16 @@
 # jats-convert
 
+## 1.0.12
+
+### Patch Changes
+
+- 475d4be: Do not include footnote reference children in the tree
+- 475d4be: Remove redundant acknowledgments title
+- Updated dependencies [475d4be]
+  - jats-fetch@1.0.12
+  - jats-xml@1.0.12
+  - jats-tags@1.0.12
+
 ## 1.0.11
 
 ### Patch Changes
