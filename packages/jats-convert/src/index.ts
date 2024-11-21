@@ -370,7 +370,7 @@ const handlers: Record<string, Handler> = {
       }
       case RefType.fn:
       case RefType.tableFn: {
-        state.renderInline(node, 'footnoteReference', { label, identifier });
+        state.addLeaf('footnoteReference', { label, identifier });
         return;
       }
       default: {

@@ -1,6 +1,6 @@
 import type { Plugin } from 'unified';
 import type { GenericNode, GenericParent } from 'myst-common';
-import { liftChildren } from 'myst-common';
+import { liftChildren, toText } from 'myst-common';
 import { blockNestingTransform } from 'myst-transforms';
 import { select } from 'unist-util-select';
 import { remove } from 'unist-util-remove';
@@ -20,7 +20,9 @@ function recurseSections(tree: GenericNode, depth = 1, titleType?: 'heading' | '
       firstChild = sec.children?.[1];
     }
     if (firstChild?.type === 'title') {
-      if (titleType === 'strong') {
+      if (sec.type === 'ack' && toText(firstChild).toLowerCase().startsWith('ack')) {
+        firstChild.type = '__delete__';
+      } else if (titleType === 'strong') {
         firstChild.type = 'p';
         firstChild.children = [{ type: 'bold', children: firstChild.children }];
       } else {
@@ -29,6 +31,7 @@ function recurseSections(tree: GenericNode, depth = 1, titleType?: 'heading' | '
         firstChild.depth = depth;
       }
     }
+    if (sec.type === 'ack') sec.part = 'acknowledgments';
     recurseSections(sec, depth + 1, titleType);
   });
 }
@@ -46,7 +49,6 @@ export function sectionTransform(tree: GenericParent, titleType?: 'heading' | 's
   remove(tree, '__delete__');
   const topSections = tree.children?.filter((n) => isSection(n));
   topSections.forEach((sec) => {
-    if (sec.type === 'ack') sec.part = 'acknowledgments';
     sec.type = 'block';
   });
   while (select('sec', tree)) liftChildren(tree as any, 'sec');
