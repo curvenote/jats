@@ -4,6 +4,7 @@ import readline from 'node:readline';
 import { S3Client } from '@aws-sdk/client-s3';
 import { doi } from 'doi-utils';
 import { makeExecutable, tic, type ISession } from 'myst-cli-utils';
+import { xml2js } from 'xml-js';
 import type {
   DownloadResult,
   EsummaryResult,
@@ -18,6 +19,7 @@ import { defaultFetcher, downloadFileFromS3, findFile, streamToFile } from './ut
 
 const EFETCH_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi';
 const ESUMMARY_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi';
+const OA_URL = 'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi';
 const IDCONV_URL = 'https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/';
 const LISTING_BASE_URL = 'https://ftp.ncbi.nlm.nih.gov/pub/pmc/';
 const LISTING_URL = `${LISTING_BASE_URL}oa_file_list.csv`;
@@ -35,6 +37,8 @@ const OA_CONFIG: S3Config = {
   },
 };
 
+type ConvertIdTypes = keyof Required<IdconvResult>['records'][0];
+
 export function normalizePMID(session: ISession, pmid: string) {
   if (pmid.startsWith('https://')) {
     const idPart = new URL(pmid).pathname.slice(1);
@@ -42,6 +46,59 @@ export function normalizePMID(session: ISession, pmid: string) {
     return idPart;
   }
   return pmid;
+}
+
+async function convertId(
+  session: ISession,
+  id: string,
+  from: ConvertIdTypes,
+  to: ConvertIdTypes,
+  opts?: ResolutionOptions,
+): Promise<string | undefined> {
+  const toc = tic();
+  const resp = await (opts?.fetcher ?? defaultFetcher)(
+    `${IDCONV_URL}?tool=jats-xml&format=json&ids=${id}`,
+    'json',
+  );
+  if (!resp.ok) {
+    // Silently return -- other functions can try!
+    session.log.debug(`Failed to convert ${from} ID: ${id}`);
+    return;
+  }
+  const data = (await resp.json()) as IdconvResult;
+  const newId = data?.records?.[0]?.[to];
+  if (newId) {
+    session.log.debug(toc(`Used nih.gov to transform ${id} to ${newId} in %s.`));
+  }
+  return newId;
+}
+
+async function convertIds(
+  session: ISession,
+  ids: string[],
+  from: ConvertIdTypes,
+  to: ConvertIdTypes,
+  opts?: ResolutionOptions,
+): Promise<Record<string, string> | undefined> {
+  const toc = tic();
+  const resp = await (opts?.fetcher ?? defaultFetcher)(
+    `${IDCONV_URL}?tool=jats-xml&format=json&ids=${ids.join(',')}`,
+    'json',
+  );
+  if (!resp.ok) {
+    // Silently return -- other functions can try!
+    session.log.debug(`Failed to convert ${from} ${ids.length} IDs`);
+    return;
+  }
+  const data = (await resp.json()) as IdconvResult;
+  const entries = data?.records
+    ?.filter((record) => !!record[from] && !!record[to])
+    .map((record) => [record[from] as string, record[to] as string]);
+  const newIds = entries ? Object.fromEntries(entries) : {};
+  session.log.debug(
+    toc(`Used nih.gov to transform ${entries?.length ?? 0}/${ids.length} ${from} to ${to} in %s.`),
+  );
+  return newIds;
 }
 
 /**
@@ -57,19 +114,7 @@ export async function convertPMID2PMCID(
   opts?: ResolutionOptions,
 ): Promise<string | undefined> {
   pmid = normalizePMID(session, pmid);
-  const toc = tic();
-  const resp = await (opts?.fetcher ?? defaultFetcher)(
-    `${IDCONV_URL}?tool=jats-xml&format=json&ids=${pmid}`,
-    'json',
-  );
-  if (!resp.ok) {
-    // Silently return -- other functions can try!
-    session.log.debug(`Failed to convert PubMedID: ${pmid}`);
-    return;
-  }
-  const data = (await resp.json()) as IdconvResult;
-  const pmcid = data?.records?.[0]?.pmcid;
-  session.log.debug(toc(`Used nih.gov to transform ${pmid} to ${pmcid} in %s.`));
+  const pmcid = await convertId(session, pmid, 'pmid', 'pmcid', opts);
   return pmcid;
 }
 
@@ -86,29 +131,13 @@ export async function convertPMIDs2PMCIDs(
   opts?: ResolutionOptions,
 ): Promise<Record<string, string> | undefined> {
   pmids = pmids.map((pmid) => normalizePMID(session, pmid));
-  const toc = tic();
-  const resp = await (opts?.fetcher ?? defaultFetcher)(
-    `${IDCONV_URL}?tool=jats-xml&format=json&ids=${pmids.join(',')}`,
-    'json',
-  );
-  if (!resp.ok) {
-    // Silently return -- other functions can try!
-    session.log.debug(`Failed to convert ${pmids.length} PubMedIDs`);
-    return;
-  }
-  const data = (await resp.json()) as IdconvResult;
-  const pmcidEntries = data?.records
-    ?.filter((record): record is { pmid: string; pmcid: string } => !!record.pmcid && !!record.pmid)
-    .map((record) => [record.pmid, record.pmcid]);
-  const pmcids = pmcidEntries ? Object.fromEntries(pmcidEntries) : {};
-  session.log.debug(
-    toc(
-      `Used nih.gov to transform ${pmcidEntries?.length ?? 0}/${
-        pmids.length
-      } PMIDs to PMCID in %s.`,
-    ),
-  );
+  const pmcids = await convertIds(session, pmids, 'pmid', 'pmcid', opts);
   return pmcids;
+}
+
+export async function convertPMCID2DOI(session: ISession, pmcid: string, opts?: ResolutionOptions) {
+  const pmDoi = await convertId(session, pmcid, 'pmcid', 'doi', opts);
+  return pmDoi;
 }
 
 /**
@@ -121,27 +150,15 @@ export async function convertPMID2DOI(
 ): Promise<string | undefined> {
   pmid = normalizePMID(session, pmid);
   const toc = tic();
-  const idconvResp = await (opts?.fetcher ?? defaultFetcher)(
-    `${IDCONV_URL}?tool=jats-xml&format=json&ids=${pmid}`,
-    'json',
-  );
-  if (idconvResp.ok) {
-    const data = (await idconvResp.json()) as IdconvResult;
-    const pmDoi = data?.records?.[0]?.doi;
-    if (pmDoi) {
-      session.log.debug(
-        toc(`Used nih.gov to query ${pmid} for DOI ${pmDoi} in %s. (Tool: idconv)`),
-      );
-      return pmDoi;
-    }
-  }
+  let pmDoi = await convertId(session, pmid, 'pmid', 'doi', opts);
+  if (pmDoi) return pmDoi;
   const esummaryResp = await (opts?.fetcher ?? defaultFetcher)(
     `${ESUMMARY_URL}?db=pubmed&format=json&id=${pmid}`,
     'json',
   );
   if (esummaryResp.ok) {
     const data = (await esummaryResp.json()) as EsummaryResult;
-    const pmDoi = data?.result?.[pmid]?.articleids?.find((articleid) => {
+    pmDoi = data?.result?.[pmid]?.articleids?.find((articleid) => {
       return articleid.idtype === 'doi';
     })?.value;
     if (pmDoi) {
@@ -165,22 +182,11 @@ export async function convertPMIDs2DOIs(
   opts?: ResolutionOptions,
 ): Promise<Record<string, string | null> | undefined> {
   pmids = [...new Set(pmids.map((pmid) => normalizePMID(session, pmid)))];
-  const pmDois: Record<string, string | null> = {};
   const toc = tic();
-  const idconvResp = await (opts?.fetcher ?? defaultFetcher)(
-    `${IDCONV_URL}?tool=jats-xml&format=json&ids=${pmids.join(',')}`,
-    'json',
-  );
-  if (idconvResp.ok) {
-    const data: any = await idconvResp.json();
-    data?.records?.forEach((record: { pmid: string; doi?: string }) => {
-      if (record.doi) pmDois[record.pmid] = record.doi;
-    });
-    const pmDoiCount = Object.keys(pmDois).length;
-    if (pmDoiCount === pmids.length) {
-      session.log.debug(toc(`Used nih.gov to convert ${pmDoiCount} PMIDs to DOIs in %s.`));
-      return pmDois;
-    }
+  const pmDois: Record<string, string | null> =
+    (await convertIds(session, pmids, 'pmid', 'doi', opts)) ?? {};
+  if (Object.keys(pmDois).length === pmids.length) {
+    return pmDois;
   }
   const esummaryResp = await (opts?.fetcher ?? defaultFetcher)(
     `${ESUMMARY_URL}?db=pubmed&format=json&id=${pmids.filter((pmid) => !pmDois[pmid]).join(',')}`,
@@ -293,8 +299,7 @@ export async function getPubMedJatsFromS3(
  *
  * If file does not exist, it will be downloaded.
  */
-export async function getListingsFile(session: ISession, dest?: string, fetcher?: Fetcher) {
-  if (!dest) dest = __dirname;
+export async function getListingsFile(session: ISession, dest: string, fetcher?: Fetcher) {
   if (!path.extname(dest)) dest = path.join(dest, LISTING_FILENAME);
   if (path.extname(dest) !== '.csv') {
     throw new Error('Listing file must be .csv');
@@ -343,24 +348,55 @@ async function searchListingForPMC(listingFile: string, pmcid: string): Promise<
   throw new Error(`Article ${pmcid} not found in ${listingFile}`);
 }
 
-async function downloadAndUnzipPMC(
+type OAResponse = {
+  OA?: {
+    records?: {
+      _attributes?: { 'returned-count'?: string };
+      record?: {
+        _attributes?: { citation?: string; license?: string };
+        link?: { _attributes?: { href?: string } };
+      };
+    };
+  };
+};
+
+export async function getDownloadMetadata(pmcid: string, fetcher?: Fetcher) {
+  const resp = await (fetcher ?? defaultFetcher)(`${OA_URL}?format=tgz&id=${pmcid}`, 'xml');
+  if (!resp.ok) {
+    throw new Error(`Bad response from ${OA_URL}`);
+  }
+  const oaMeta = xml2js(await resp.text(), { compact: true }) as OAResponse;
+  if (oaMeta.OA?.records?._attributes?.['returned-count'] !== '1') {
+    throw new Error(`Bad response from ${OA_URL} - returned count is not 1`);
+  }
+  const url = oaMeta?.OA?.records?.record?.link?._attributes?.href;
+  if (!url) {
+    throw new Error(`Bad response from ${OA_URL} - href is not available`);
+  }
+  const { citation, license } = oaMeta.OA?.records?.record?._attributes ?? {};
+  return { url, citation, license };
+}
+
+export async function downloadAndUnzipPMC(
   session: ISession,
-  entry: PMCListingEntry,
+  url: string,
   outputDir: string,
   fetcher?: Fetcher,
 ) {
-  const urlParts = entry.url.split('/');
+  // PMC open-access downloads are avaible over https and ftp
+  url = url.replace(/^ftp:/, 'https:');
+  const urlParts = url.split('/');
   const filename = urlParts[urlParts.length - 1];
   const dest = path.join(outputDir, filename);
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
   if (!fs.existsSync(dest)) {
-    session.log.info(`Downloading PMC data from ${entry.url}`);
-    await streamToFile(`${LISTING_BASE_URL}${entry.url}`, dest, fetcher);
+    session.log.info(`Downloading PMC data from ${url}`);
+    await streamToFile(url, dest, fetcher);
   }
   if (!fs.existsSync(dest)) {
-    throw new Error(`Unable to download ${entry.url}`);
+    throw new Error(`Unable to download ${url}`);
   }
   session.log.info(`Extracting PMC data from ${dest} to ${outputDir}`);
   // Should use node, something like:
@@ -385,6 +421,11 @@ async function downloadAndUnzipPMC(
   fs.rmdirSync(zipDir);
 }
 
+/**
+ * Download and unzip data for PMC ID
+ *
+ * A .tar.gz URL may also be provided instead of an ID.
+ */
 export async function getDataFromPMC(
   session: ISession,
   pmcid: string,
@@ -392,11 +433,33 @@ export async function getDataFromPMC(
   listing?: string,
   fetcher?: Fetcher,
 ) {
-  const listingFile = await getListingsFile(session, listing, fetcher);
-  const entry = await searchListingForPMC(listingFile, pmcid);
-  await downloadAndUnzipPMC(session, entry, outputDir, fetcher);
+  let url: string | undefined;
+  if (pmcid.endsWith('.tar.gz')) {
+    url = pmcid;
+  } else {
+    if (!pmcid.startsWith('PMC')) {
+      throw new Error('Data may only be downloaded for PMC articles');
+    }
+    try {
+      const metadata = await getDownloadMetadata(pmcid);
+      url = metadata.url;
+    } catch {
+      if (listing) {
+        const listingFile = await getListingsFile(session, listing, fetcher);
+        const entry = await searchListingForPMC(listingFile, pmcid);
+        url = `${LISTING_BASE_URL}${entry.url}`;
+      }
+    }
+  }
+  if (!url) {
+    throw new Error(`Unable to find PMC data download url for: ${pmcid}`);
+  }
+  await downloadAndUnzipPMC(session, url, outputDir, fetcher);
 }
 
+/**
+ * Download and unzip PMC data and rename JATS xml to specified output file
+ */
 export async function getPubMedJatsFromData(
   session: ISession,
   pmcid: string,
