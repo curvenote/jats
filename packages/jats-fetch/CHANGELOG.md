@@ -1,5 +1,11 @@
 # jats-fetch
 
+## 1.0.13
+
+### Patch Changes
+
+- aa53c1d: Use OA api rather than listing file to locate tgz files
+
 ## 1.0.12
 
 ### Patch Changes

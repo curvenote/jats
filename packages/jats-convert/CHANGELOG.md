@@ -1,5 +1,14 @@
 # jats-convert
 
+## 1.0.13
+
+### Patch Changes
+
+- Updated dependencies [aa53c1d]
+  - jats-fetch@1.0.13
+  - jats-xml@1.0.13
+  - jats-tags@1.0.13
+
 ## 1.0.12
 
 ### Patch Changes

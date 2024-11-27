@@ -1,5 +1,12 @@
 # jats-xml
 
+## 1.0.13
+
+### Patch Changes
+
+- jats-tags@1.0.13
+- jats-utils@1.0.13
+
 ## 1.0.12
 
 ### Patch Changes
