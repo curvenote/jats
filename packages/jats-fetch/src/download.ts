@@ -5,7 +5,6 @@ import type { ISession } from 'myst-cli-utils';
 import { isUrl, tic } from 'myst-cli-utils';
 import {
   constructJatsUrlFromPubMedCentral,
-  getDataFromPMC,
   getListingsFile,
   getPubMedJatsFromData,
   getPubMedJatsFromS3,
@@ -163,8 +162,8 @@ export async function downloadJatsFromUrl(
  *
  * `output` may be a destination folder or xml filename. If `data` is `true`, this function will also
  * attempt to fetch dependent data; currently, this flag is only supported for open-access PMC articles.
- * The `listing` file to look up data location may also be specified; otherwise, it will be downloaded
- * and cached.
+ * Data location will be determined using the pubmed OA API. You may also specify a `listing` file to look up
+ * data location.
  */
 export async function jatsFetch(
   session: ISession,
@@ -172,21 +171,41 @@ export async function jatsFetch(
   opts: { output?: string; data?: boolean; listing?: string },
 ) {
   if (input === 'listing' && !opts.data && !(opts.output && opts.listing)) {
-    const dest = await getListingsFile(session, opts.output ?? opts.listing);
+    // Handle downloading only the listings file
+    const inputDest = opts.output ?? opts.listing;
+    if (!inputDest) {
+      throw new Error('Destination for listing file must be specified');
+    }
+    const dest = await getListingsFile(session, inputDest);
     session.log.info(`PMC Open Access listing saved to ${dest}`);
     return;
   }
-  let output = opts.output ?? (opts.data ? `${input}` : '.');
+  let output = opts.output;
+  let filename: string | undefined;
+  if (input.endsWith('.tar.gz')) {
+    // If input looks like a data repository URL, assume we want the data.
+    opts.data = true;
+    const foldername = input.split('/').slice(-1)[0].slice(0, -'.tar.gz'.length);
+    filename = `${foldername}.xml`;
+    if (!output) {
+      output = foldername;
+    }
+  }
+  if (!output) output = opts.data ? `${input}` : '.';
   if (!path.extname(output)) {
-    const filename = input.startsWith('PMC') ? `${input}.xml` : 'jats.xml';
+    filename = filename ?? (input.startsWith('PMC') ? `${input}.xml` : 'jats.xml');
     output = path.join(output, filename);
   }
   if (path.extname(output) && !['.xml', '.jats'].includes(path.extname(output).toLowerCase())) {
     throw new Error(`Output must be an XML file or a directory`);
   }
   let result: DownloadResult | undefined;
+  if (opts.data) {
+    // This downloads all data and renames JATS - it will throw if it does not work
+    result = await getPubMedJatsFromData(session, input, path.dirname(output), opts.listing);
+  }
   // We can do better with doi/pubmed -> PMC conversions to use this path more
-  if (input.startsWith('PMC')) {
+  if (!result?.data && input.startsWith('PMC')) {
     result = await getPubMedJatsFromS3(session, input);
   }
   if (!result?.data) {
@@ -206,10 +225,4 @@ export async function jatsFetch(
   }
   fs.writeFileSync(output, result.data);
   session.log.info(`JATS written to ${output}`);
-  if (!opts.data) return;
-  if (input.startsWith('PMC')) {
-    await getDataFromPMC(session, input, path.dirname(output), opts.listing);
-  } else {
-    session.log.error('Data may only be downloaded for PMC articles');
-  }
 }
