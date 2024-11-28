@@ -11,7 +11,7 @@ Read and write JATS XML from node or see summaries from the command line.
 To use from the command line, use the `-g` to create a global install, which will provide a `jats` CLI:
 
 ```
-npm install -g jats-xml
+npm install -g jats-cli
 jats -v
 ```
 
