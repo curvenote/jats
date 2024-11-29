@@ -2,8 +2,8 @@
   "name": "jats-convert",
   "version": "1.0.13",
   "description": "Read JATS and convert to MyST-spec frontmatter and AST",
-  "author": "Rowan Cockett <rowan@curvenote.com>",
-  "homepage": "https://github.com/curvenote/jats/tree/main/packages/jats-convert",
+  "author": "Rowan Cockett <rowan@continuous.foundation>",
+  "homepage": "https://github.com/continuous-foundation/jats/tree/main/packages/jats-convert",
   "license": "MIT",
   "type": "module",
   "exports": "./dist/index.js",
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/curvenote/jats.git"
+    "url": "git+https://github.com/continuous-foundation/jats.git"
   },
   "scripts": {
     "copy:version": "echo \"const version = '\"$npm_package_version\"';\nexport default version;\" > src/version.ts",
@@ -33,7 +33,7 @@
     "build": "npm-run-all -l clean copy:version -p build:esm"
   },
   "bugs": {
-    "url": "https://github.com/curvenote/jats/issues"
+    "url": "https://github.com/continuous-foundation/jats/issues"
   },
   "dependencies": {
     "doi-utils": "^2.0.3",

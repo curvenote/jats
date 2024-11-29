@@ -1,8 +1,8 @@
 # jats-fetch
 
 [![jats-fetch on npm](https://img.shields.io/npm/v/jats-fetch.svg)](https://www.npmjs.com/package/jats-fetch)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/curvenote/jats/blob/main/LICENSE)
-[![CI](https://github.com/curvenote/jats/workflows/CI/badge.svg)](https://github.com/curvenote/jats/actions)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/continuous-foundation/jats/blob/main/LICENSE)
+[![CI](https://github.com/continuous-foundation/jats/workflows/CI/badge.svg)](https://github.com/continuous-foundation/jats/actions)
 
 Utilities for finding and downloading JATS XML documents.
 
@@ -24,7 +24,7 @@ As of v1.0.0 this package is [ESM only](https://gist.github.com/sindresorhus/a39
 
 <p style="text-align: center; color: #aaa; padding-top: 50px">
   Made with love by
-  <a href="https://curvenote.com" target="_blank" style="color: #aaa">
-    <img src="https://cdn.curvenote.com/brand/logo-blue-icon.png" style="height: 1em" /> Curvenote
+  <a href="https://continuous.foundation" target="_blank" style="color: #aaa">
+    Continuous Science Foundation <img src="https://continuous.foundation/images/logo-small.svg" style="height: 1em" />
   </a>
 </p>
