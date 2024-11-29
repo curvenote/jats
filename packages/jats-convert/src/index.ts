@@ -1,8 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Root } from 'myst-spec';
 import { unified } from 'unified';
-import { doi } from 'doi-utils';
 import type { Plugin } from 'unified';
 import { VFile } from 'vfile';
 import yaml from 'js-yaml';
@@ -10,21 +8,21 @@ import type { MessageInfo, GenericNode, GenericParent } from 'myst-common';
 import { copyNode, fileError, RuleId, normalizeLabel } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { u } from 'unist-builder';
-import type { License, LinkMixin } from 'jats-tags';
+import type { Body, License, LinkMixin } from 'jats-tags';
 import { RefType } from 'jats-tags';
 import type { ISession } from 'jats-xml';
 import { Jats } from 'jats-xml';
 import { MathMLToLaTeX } from 'mathml-to-latex';
 import { js2xml } from 'xml-js';
 import type { Handler, IJatsParser, JatsResult, Options, StateData } from './types.js';
-import {
-  basicTransformations,
-  citationToMixedCitation,
-  journalTransforms,
-} from './transforms/index.js';
+import { basicTransformations, journalTransforms } from './transforms/index.js';
 import type { ProjectFrontmatter } from 'myst-frontmatter';
 import { abstractTransform, descriptionFromAbstract } from './transforms/abstract.js';
-import { processJatsReferences, resolveJatsCitations } from './transforms/references.js';
+import {
+  getPMIDLookup,
+  processJatsReferences,
+  resolveJatsCitations,
+} from './transforms/references.js';
 import { backToBodyTransform } from './transforms/footnotes.js';
 import version from './version.js';
 import { logMessagesFromVFile, toText } from './utils.js';
@@ -512,92 +510,74 @@ export class JatsParser implements IJatsParser {
   }
 }
 
-export const jatsConvertPlugin: Plugin<[Jats, Options?], Root, Root> = function (jats, opts) {
-  this.Compiler = (node: GenericParent, file: VFile) => {
-    if (jats.abstract) abstractTransform(jats.abstract);
-    const tree = jats.abstract
-      ? {
-          type: 'root',
-          children: [
-            u('block', { part: 'abstract' }, copyNode(jats.abstract).children),
-            ...copyNode(node).children,
-          ],
-        }
-      : copyNode(node);
+export const jatsConvertPlugin: Plugin<[Jats, Options?], Body, Body> = function (jats, opts) {
+  this.Compiler = (body: Body, file: VFile) => {
+    if (jats.abstract) {
+      abstractTransform(jats.abstract);
+      body.children = [
+        u('block', { part: 'abstract' }, copyNode(jats.abstract).children),
+        ...body.children,
+      ];
+    }
     // Can do better than this in the future, but for now, just put them at the end!
     const floatsGroup = selectAll('floats-group', jats.tree) as GenericParent[];
     if (floatsGroup.length > 0) {
       floatsGroup.forEach((g) => {
-        tree.children.push(...g.children);
+        body.children.push(...g.children);
       });
     }
-    basicTransformations(tree, file);
-    citationToMixedCitation(tree);
-    journalTransforms(tree);
-    const state = new JatsParser(file, jats, opts ?? { handlers });
-    state.renderChildren(tree);
+    floatToEndTransform(body);
+    backToBodyTransform(body, jats.back);
+    const refLookup = processJatsReferences(body, jats.references, opts);
+    basicTransformations(body, file);
+    journalTransforms(body);
+    const state = new JatsParser(file, jats, opts);
+    state.renderChildren(body);
     while (state.stack.length > 1) state.closeNode();
+    const tree = state.stack[0] as GenericParent;
     if (state.unhandled.length && opts?.logInfo) {
       opts.logInfo.unhandled = [...new Set(state.unhandled)];
     }
-    const referenceData = Object.fromEntries(
-      jats.references.map((bibr) => {
-        const id = bibr.id;
-        const names = selectAll('name,string-name', bibr)
-          .map((n) => `${toText(select('surname', n))}, ${toText(select('given-names', n))}`)
-          .join(', ');
-        const year = toText(select('year', bibr));
-        const title = toText(select('article-title', bibr));
-        const source = toText(select('source', bibr));
-        const volume = toText(select('volume', bibr));
-        const fpage = toText(select('fpage', bibr));
-        const lpage = toText(select('lpage', bibr));
-        const doiElement = selectAll('ext-link,[pub-id-type=doi]', bibr).find((e) =>
-          doi.validate(toText(e)),
-        );
-        const doiString = doiElement ? toText(doiElement) : undefined;
-        const doiLink = doiString ? ` <a href=${doi.buildUrl(doiString)}>${doiString}</a>` : '';
-        return [
-          id,
-          {
-            html: `${names}. (${year}). ${title}. <i>${source}</i>, <i>${volume}</i>, ${fpage}-${lpage}.${doiLink}`,
-            doi: doiString,
-          },
-        ];
-      }),
+
+    resolveJatsCitations(tree, refLookup);
+    inlineCitationsTransform(
+      tree,
+      jats.references
+        .map(({ id }) => {
+          const { identifier } = normalizeLabel(id) ?? {};
+          return identifier;
+        })
+        .filter((id): id is string => !!id),
     );
 
-    const referenceOrder: string[] = [];
-    const xrefs = selectAll('xref[ref-type=bibr]', jats.body) as GenericNode[];
-    xrefs.forEach((xref) => {
-      const rid = xref.rid;
-      if (!referenceOrder.includes(rid)) {
-        referenceOrder.push(rid);
-      }
+    const { frontmatter } = jats;
+    abbreviationSectionTransform(tree, frontmatter);
+    const abstract = selectAll('block', tree).find((block) => {
+      return block.data && (block.data as any).part === 'abstract';
     });
+    if (abstract) {
+      frontmatter.description = descriptionFromAbstract(toText(abstract));
+    }
     const result: JatsResult = {
-      references: { order: referenceOrder, data: referenceData },
-      tree: state.stack[0] as Root,
+      tree,
+      frontmatter,
     };
     file.result = result;
     return file;
   };
 
-  return (node: Root) => {
+  return (node: Body) => {
     return node;
   };
 };
 
-export async function jatsConvertTransform(
-  data: string | Jats,
+export function jatsConvertTransform(
+  jats: Jats,
   opts?: Options,
-): Promise<{
-  tree: Root;
-  jats: Jats;
-  references: any;
+): {
+  tree: GenericParent;
   frontmatter: ProjectFrontmatter;
-}> {
-  const jats = typeof data === 'string' ? new Jats(data) : data;
+} {
   if (opts?.logInfo) {
     opts.logInfo.publisher = toText(select('publisher-name', jats.tree)) || null;
     opts.logInfo.journal = toText(select('journal-title', jats.tree)) || null;
@@ -618,24 +598,10 @@ export async function jatsConvertTransform(
     }
     opts.logInfo.license = licenseString;
   }
-  const { frontmatter } = jats;
   const file = opts?.vfile ?? new VFile();
-  const refLookup = await processJatsReferences(jats, opts);
-  floatToEndTransform(jats);
-  backToBodyTransform(jats);
   const pipe = unified().use(jatsConvertPlugin, jats, opts);
-  pipe.stringify((jats.body ?? { type: 'body', children: [] }) as any, file);
-  const references = (file as any).result.references as JatsResult['references'];
-  const tree = (file as any).result.tree as Root;
-  resolveJatsCitations(tree, refLookup);
-  inlineCitationsTransform(tree, [...Object.keys(references.data)]);
-  abbreviationSectionTransform(tree, frontmatter);
-  const abstract = selectAll('block', tree).find((node) => {
-    return node.data && (node.data as any).part === 'abstract';
-  });
-  if (abstract) {
-    frontmatter.description = descriptionFromAbstract(toText(abstract));
-  }
+  pipe.stringify(copyNode(jats.body ?? { type: 'body', children: [] }) as Body, file);
+  const { tree, frontmatter } = file.result as JatsResult;
   if (opts?.logInfo) {
     opts.logInfo.figures = {
       body: selectAll('fig', jats.body).length,
@@ -665,7 +631,7 @@ export async function jatsConvertTransform(
       myst: selectAll('footnoteDefinition', tree).length,
     };
   }
-  return { tree, jats, references, frontmatter }; //, kind };
+  return { tree, frontmatter };
 }
 
 export async function jatsConvert(
@@ -677,10 +643,13 @@ export async function jatsConvert(
   const dir = path.dirname(input);
   const vfile = new VFile();
   vfile.path = input;
-  const { tree, frontmatter } = await jatsConvertTransform(fs.readFileSync(input).toString(), {
+  const jats = new Jats(fs.readFileSync(input).toString());
+  const pmidCache = await getPMIDLookup(jats.references, dir);
+  const { tree, frontmatter } = jatsConvertTransform(jats, {
     vfile,
     dir,
     logInfo,
+    pmidCache,
     dois: opts?.dois,
     bibtex: opts?.bibtex,
   });

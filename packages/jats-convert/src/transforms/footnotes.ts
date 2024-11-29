@@ -1,22 +1,16 @@
 import { copyNode } from 'myst-common';
-import { remove } from 'unist-util-remove';
-import type { Jats } from 'jats-xml';
+import type { Back, Body } from 'jats-tags';
 
 /**
- * Move footnotes and sections from back to body
+ * Copy footnotes and sections from back into body tree
  *
- * Currently we only pass body to JATS convert plugin, so we move parts of
- * the backmatter that need parsing to body.
+ * Back is not modified.
  */
-export function backToBodyTransform(jats: Jats) {
-  if (!jats.back) return;
-  const backNodes = jats.back.children?.filter((node) => {
+export function backToBodyTransform(body: Body, back?: Back) {
+  if (!back) return;
+  const backNodes = back.children?.filter((node) => {
     return ['fn-group', 'sec', 'ack'].includes(node.type);
   });
-  if (!jats.body?.children || backNodes.length === 0) return;
-  jats.body.children.push({ type: 'hr' }, ...copyNode(backNodes));
-  backNodes.forEach((node) => {
-    node.type = '__delete__';
-  });
-  remove(jats.back, '__delete__');
+  if (!body?.children || backNodes.length === 0) return;
+  body.children.push({ type: 'hr' }, ...copyNode(backNodes));
 }

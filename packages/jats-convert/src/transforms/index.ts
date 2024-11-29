@@ -1,7 +1,6 @@
-import type { GenericParent, GenericNode } from 'myst-common';
 import type { Plugin } from 'unified';
 import type { VFile } from 'vfile';
-
+import type { Body } from 'jats-tags';
 import { admonitionTransform } from './admonitions.js';
 import { graphicToBioRxivUrl } from './biorxiv.js';
 import { figCaptionTitleTransform } from './figureCaptions.js';
@@ -12,25 +11,23 @@ export * from './abbreviations.js';
 export * from './abstract.js';
 export * from './admonitions.js';
 export * from './biorxiv.js';
-export * from './citations.js';
 export * from './figureCaptions.js';
 export * from './footnotes.js';
 export * from './references.js';
 export * from './sections.js';
 export * from './typography.js';
 
-export function basicTransformations(tree: GenericParent, file: VFile) {
-  sectionTransform(tree);
-  typographyTransform(tree);
-  admonitionTransform(tree, file);
-  figCaptionTitleTransform(tree);
+export function basicTransformations(body: Body, file: VFile) {
+  sectionTransform(body);
+  typographyTransform(body);
+  admonitionTransform(body, file);
+  figCaptionTitleTransform(body);
 }
 
-export const basicTransformationsPlugin: Plugin<[], GenericParent, GenericParent> =
-  () => (tree, file) => {
-    basicTransformations(tree, file);
-  };
+export const basicTransformationsPlugin: Plugin<[], Body, Body> = () => (body, file) => {
+  basicTransformations(body, file);
+};
 
-export function journalTransforms(tree?: GenericNode) {
-  graphicToBioRxivUrl(tree);
+export function journalTransforms(body: Body) {
+  graphicToBioRxivUrl(body);
 }
