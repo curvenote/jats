@@ -184,7 +184,7 @@ function bibtexFromCite(key: string, cite: GenericNode, counts: Counts, doi?: st
   }
   if (bibtexLines.length === 1) {
     counts.unprocessed += 1;
-    // console.log(`This needs addressing: ${key}`);
+    bibtexLines.push(`  note = {${toText(cite)}}`);
   } else {
     counts.bibtex += 1;
     counts.lostRefItems.push(...skipped);
