@@ -90,10 +90,11 @@ const handlers: Record<string, Handler> = {
     state.renderInline(node, 'paragraph');
   },
   heading(node, state) {
+    const { label, identifier } = normalizeLabel(node.id) ?? {};
     state.renderInline(node, 'heading', {
       enumerated: true,
-      label: node.id,
-      identifier: node.id,
+      label,
+      identifier,
       depth: node.depth,
     });
   },
@@ -131,10 +132,11 @@ const handlers: Record<string, Handler> = {
   ['inline-formula'](node, state) {
     const texMath = texMathFromNode(node);
     if (texMath) {
+      const { label, identifier } = normalizeLabel(node.id) ?? {};
       state.addLeaf('inlineMath', {
         value: texMath,
-        label: node.id,
-        identifier: node.id,
+        label,
+        identifier,
       });
     } else {
       state.renderChildren(node);
@@ -143,10 +145,11 @@ const handlers: Record<string, Handler> = {
   ['disp-formula'](node, state) {
     const texMath = texMathFromNode(node);
     if (texMath) {
+      const { label, identifier } = normalizeLabel(node.id) ?? {};
       state.addLeaf('math', {
         value: texMath,
-        label: node.id,
-        identifier: node.id,
+        label,
+        identifier,
       });
     } else {
       state.renderChildren(node);
