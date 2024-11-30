@@ -195,7 +195,14 @@ const handlers: Record<string, Handler> = {
     state.renderInline(node, 'link', { url: node['xlink:href'] });
   },
   ['boxed-text'](node, state) {
+    if (node.id) {
+      const { label, identifier } = normalizeLabel(node.id) ?? {};
+      state.openNode('div', { label, identifier });
+    }
     state.renderInline(node, 'admonition', { kind: 'info' });
+    if (node.id) {
+      state.closeNode();
+    }
   },
   admonitionTitle(node, state) {
     // This is created in a transform!
@@ -360,6 +367,7 @@ const handlers: Record<string, Handler> = {
           kind: 'narrative',
         });
         return;
+      case RefType.boxedText:
       case RefType.media:
       case RefType.supplementaryMaterial:
       case RefType.sec:
@@ -400,6 +408,9 @@ const handlers: Record<string, Handler> = {
   },
   caption(node, state) {
     state.renderChildren(node);
+  },
+  email(node, state) {
+    state.renderInline(node, 'link', { url: `mailto:${toText(node)}` });
   },
   // These nodes can be safely ignored
   label() {},
