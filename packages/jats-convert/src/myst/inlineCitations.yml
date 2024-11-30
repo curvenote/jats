@@ -395,7 +395,7 @@ cases:
                   identifier: example_2020
                   kind: narrative
             - type: text
-              value: '.'
+              value: '. '
             - type: citeGroup
               kind: narrative
               children:
@@ -659,4 +659,103 @@ cases:
                 - type: cite
                   label: example_2023
                   identifier: example_2023
+                  kind: parenthetical
+  - title: Superscripts around citations are removed
+    before:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citations: '
+            - type: superscript
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: parenthetical
+                  children:
+                    - type: text
+                      value: Example, 2020
+    after:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citations: '
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: parenthetical
+  - title: Superscripts are not removed if there are non citation children
+    before:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citations: '
+            - type: superscript
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: parenthetical
+                  children:
+                    - type: text
+                      value: Example, 2020
+                - type: text
+                  value: and stuff
+    after:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citations: '
+            - type: superscript
+              children:
+                - type: citeGroup
+                  kind: parenthetical
+                  children:
+                    - type: cite
+                      label: example_2020
+                      identifier: example_2020
+                      kind: parenthetical
+                - type: text
+                  value: and stuff
+  - title: Space is added before citation
+    before:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citations:'
+            - type: superscript
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
+                  kind: parenthetical
+                  children:
+                    - type: text
+                      value: Example, 2020
+    after:
+      type: root
+      children:
+        - type: paragraph
+          children:
+            - type: text
+              value: 'My citations: '
+            - type: citeGroup
+              kind: parenthetical
+              children:
+                - type: cite
+                  label: example_2020
+                  identifier: example_2020
                   kind: parenthetical
