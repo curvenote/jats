@@ -357,6 +357,7 @@ const handlers: Record<string, Handler> = {
           kind: 'narrative',
         });
         return;
+      case RefType.media:
       case RefType.supplementaryMaterial:
       case RefType.sec:
       case RefType.fig:
