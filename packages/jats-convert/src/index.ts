@@ -29,6 +29,8 @@ import { logMessagesFromVFile, toText } from './utils.js';
 import { inlineCitationsTransform } from './myst/inlineCitations.js';
 import { abbreviationSectionTransform } from './transforms/abbreviations.js';
 import { floatToEndTransform } from './transforms/supplementary.js';
+import { dataAvailabilityTransform } from './transforms/parts.js';
+import { abbreviationsFromTree } from './myst/abbreviations.js';
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
@@ -543,6 +545,7 @@ export const jatsConvertPlugin: Plugin<[Jats, Options?], Body, Body> = function 
     }
     floatToEndTransform(body);
     backToBodyTransform(body, jats.back);
+    dataAvailabilityTransform(body);
     const refLookup = processJatsReferences(body, jats.references, opts);
     basicTransformations(body, file);
     journalTransforms(body);
@@ -567,6 +570,7 @@ export const jatsConvertPlugin: Plugin<[Jats, Options?], Body, Body> = function 
 
     const { frontmatter } = jats;
     abbreviationSectionTransform(tree, frontmatter);
+    abbreviationsFromTree(tree, frontmatter);
     const abstract = selectAll('block', tree).find((block) => {
       return block.data && (block.data as any).part === 'abstract';
     });
