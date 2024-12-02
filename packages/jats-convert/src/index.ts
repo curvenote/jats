@@ -146,15 +146,23 @@ const handlers: Record<string, Handler> = {
   },
   ['disp-formula'](node, state) {
     const texMath = texMathFromNode(node);
+    const { label, identifier } = normalizeLabel(node.id) ?? {};
     if (texMath) {
-      const { label, identifier } = normalizeLabel(node.id) ?? {};
       state.addLeaf('math', {
         value: texMath,
         label,
         identifier,
       });
     } else {
+      if (node.id) {
+        state.openNode('div', { label, identifier });
+      }
+      state.openNode('paragraph');
       state.renderChildren(node);
+      state.closeNode();
+      if (node.id) {
+        state.closeNode();
+      }
     }
   },
   bold(node, state) {
