@@ -5,7 +5,7 @@ import { clirun, getSession } from 'myst-cli-utils';
 function makeConvertCLI(program: Command) {
   const command = new Command('convert')
     .description('Convert JATS file to MyST mdast json')
-    .argument('<input>', 'The JATS file')
+    .argument('[input]', 'The JATS file')
     .addOption(
       new Option(
         '--frontmatter <frontmatter>',

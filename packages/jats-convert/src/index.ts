@@ -655,10 +655,20 @@ export function jatsConvertTransform(
 
 export async function jatsConvert(
   session: ISession,
-  input: string,
+  input?: string,
   opts?: { frontmatter?: 'page' | 'project'; dois?: boolean; bibtex?: boolean },
 ) {
   const logInfo: Record<string, any> = { jatsVersion: version };
+  if (!input) {
+    const xmls = fs.readdirSync('.').filter((file) => path.extname(file) === '.xml');
+    if (xmls.length === 0) {
+      throw new Error('No JATS xml file found in current directory; please specify input');
+    }
+    if (xmls.length > 1) {
+      throw new Error('Multiple XML files found in current directory; please specify input');
+    }
+    input = xmls[0];
+  }
   const dir = path.dirname(input);
   const vfile = new VFile();
   vfile.path = input;
