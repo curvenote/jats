@@ -377,6 +377,7 @@ const handlers: Record<string, Handler> = {
           kind: 'narrative',
         });
         return;
+      case RefType.app:
       case RefType.boxedText:
       case RefType.media:
       case RefType.supplementaryMaterial:
@@ -401,6 +402,19 @@ const handlers: Record<string, Handler> = {
     }
   },
   ['supplementary-material'](node, state) {
+    if (node.id) {
+      const { label, identifier } = normalizeLabel(node.id) ?? {};
+      state.openNode('div', { label, identifier });
+    }
+    state.renderChildren(node);
+    if (node.id) {
+      state.closeNode();
+    }
+  },
+  ['app-group'](node, state) {
+    state.renderChildren(node);
+  },
+  app(node, state) {
     if (node.id) {
       const { label, identifier } = normalizeLabel(node.id) ?? {};
       state.openNode('div', { label, identifier });

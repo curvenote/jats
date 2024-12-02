@@ -9,7 +9,7 @@ import type { Back, Body } from 'jats-tags';
 export function backToBodyTransform(body: Body, back?: Back) {
   if (!back) return;
   const backNodes = back.children?.filter((node) => {
-    return ['fn-group', 'sec', 'ack'].includes(node.type);
+    return ['fn-group', 'sec', 'ack', 'app-group'].includes(node.type);
   });
   if (!body?.children || backNodes.length === 0) return;
   body.children.push({ type: 'hr' }, ...copyNode(backNodes));
