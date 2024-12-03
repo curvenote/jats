@@ -69,3 +69,6 @@ cases:
     text: high sensitivity C reactive protein (hsCRP)
     abbreviations:
       hsCRP: high sensitivity C reactive protein
+  - title: Single character is not abbreviation
+    text: See figure (f) please
+    abbreviations: {}

@@ -59,7 +59,7 @@ export function abbreviationsFromText(text: string): Record<string, string> {
   const abbreviations: Record<string, string> = {};
   const textList = text.split(' ');
   textList.forEach((word, index) => {
-    const abbr = word.match(/^\(([^\s]+)\).{0,1}/)?.[1];
+    const abbr = word.match(/^\(([^\s]{2,})\).{0,1}/)?.[1];
     if (!abbr) return;
     const possibleWords: string[] = [];
     let wordIndex = index - 1;
