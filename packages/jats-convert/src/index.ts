@@ -23,11 +23,14 @@ import {
   processJatsReferences,
   resolveJatsCitations,
 } from './transforms/references.js';
-import { backToBodyTransform } from './transforms/footnotes.js';
+import { backToBodyTransform, tableFootnotesToLegend } from './transforms/footnotes.js';
 import version from './version.js';
 import { logMessagesFromVFile, toText } from './utils.js';
 import { inlineCitationsTransform } from './myst/inlineCitations.js';
-import { abbreviationSectionTransform } from './transforms/abbreviations.js';
+import {
+  abbreviationFootnoteTransform,
+  abbreviationSectionTransform,
+} from './transforms/abbreviations.js';
 import { floatToEndTransform } from './transforms/supplementary.js';
 import { dataAvailabilityTransform } from './transforms/parts.js';
 import { abbreviationsFromTree } from './myst/abbreviations.js';
@@ -592,7 +595,9 @@ export const jatsConvertPlugin: Plugin<[Jats, Options?], Body, Body> = function 
 
     const { frontmatter } = jats;
     abbreviationSectionTransform(tree, frontmatter);
+    abbreviationFootnoteTransform(tree, frontmatter);
     abbreviationsFromTree(tree, frontmatter);
+    tableFootnotesToLegend(tree);
     const abstract = selectAll('block', tree).find((block) => {
       return block.data && (block.data as any).part === 'abstract';
     });
