@@ -1,5 +1,12 @@
 # jats-utils
 
+## 1.0.14
+
+### Patch Changes
+
+- Updated dependencies [20b6246]
+  - jats-tags@1.0.14
+
 ## 1.0.13
 
 ### Patch Changes

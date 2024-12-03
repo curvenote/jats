@@ -1,5 +1,28 @@
 # jats-convert
 
+## 1.0.14
+
+### Patch Changes
+
+- 20b6246: Allow jats convert to find xml if there is only one
+- 20b6246: Support xrefs to boxed-text
+- 20b6246: Remove data availability title from part
+- 20b6246: Reorganize and simplify jats transform functions
+- 20b6246: Correctly support jats citation element
+- 20b6246: Correctly normalize math labels and identifiers
+- 20b6246: Basic support for appendices
+- 20b6246: Support email element
+- 20b6246: Fix citation range filling
+- 20b6246: Support media ref type
+- 20b6246: Support text disp-formulas
+- 20b6246: Add unparsed citations as notes in bibtex
+- 20b6246: Footnotes: extract abbreviations, leave unreferenced table fns in table legend
+- 20b6246: Basic automatic parsing of abbreviations
+- Updated dependencies [20b6246]
+  - jats-tags@1.0.14
+  - jats-xml@1.0.14
+  - jats-fetch@1.0.14
+
 ## 1.0.13
 
 ### Patch Changes

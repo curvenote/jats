@@ -1,5 +1,11 @@
 # jats-tags
 
+## 1.0.14
+
+### Patch Changes
+
+- 20b6246: Support media ref type
+
 ## 1.0.13
 
 ## 1.0.12
