@@ -165,6 +165,39 @@ function expandHyphenatedCites(tree: GenericParent, referenceList: string[]) {
   remove(tree, '__delete__');
 }
 
+/**
+ * Remove superscript around citations
+ */
+function removeCiteSuperscript(tree: GenericParent) {
+  const citeGroupParents = selectAll(':has(> citeGroup)', tree) as GenericParent[];
+  citeGroupParents.forEach((parent) => {
+    if (parent.type !== 'superscript') return;
+    if (parent.children.length !== 1) return;
+    parent.type = '__lift__';
+  });
+  liftChildren(tree, '__lift__');
+}
+
+/**
+ * Ensure there are spaces before citations
+ *
+ * This is a problem, for example, when citations are removed from superscript and there
+ * was no space before the citation.
+ */
+function ensureSpaceBeforeCite(tree: GenericParent) {
+  const citeGroupParents = selectAll(':has(> text + citeGroup)', tree) as GenericParent[];
+  citeGroupParents.forEach((parent) => {
+    parent.children.forEach((child, index) => {
+      if (child.type !== 'text') return;
+      const citeChild = parent.children[index + 1];
+      if (citeChild?.type !== 'citeGroup') return;
+      if (child.value?.match(/\s+$/)) return;
+      if (child.value?.match(/[[(]$/)) return;
+      child.value = `${child.value} `;
+    });
+  });
+}
+
 export function inlineCitationsTransform(tree: GenericParent, referenceIds: string[]) {
   let before = '';
   let current = JSON.stringify(tree);
@@ -178,6 +211,8 @@ export function inlineCitationsTransform(tree: GenericParent, referenceIds: stri
     removeCiteSeparators(tree);
     expandHyphenatedCites(tree, referenceIds);
     removeCiteParentheses(tree);
+    removeCiteSuperscript(tree);
+    ensureSpaceBeforeCite(tree);
     current = JSON.stringify(tree);
   }
 }

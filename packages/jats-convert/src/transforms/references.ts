@@ -1,14 +1,12 @@
 import 'dotenv/config.js';
 import fs from 'node:fs';
 import path from 'node:path';
-// import OpenAI from 'openai';
 import { convertPMIDs2DOIs, normalizePMID } from 'jats-fetch';
-import type { Reference } from 'jats-tags';
+import type { Body, Reference } from 'jats-tags';
 import type { GenericNode, GenericParent } from 'myst-common';
 import { copyNode, liftChildren, normalizeLabel } from 'myst-common';
 import { select, selectAll } from 'unist-util-select';
 import { Session } from 'myst-cli-utils';
-import type { Jats } from 'jats-xml';
 import type { Options } from '../types.js';
 import { toText } from '../utils.js';
 
@@ -186,7 +184,7 @@ function bibtexFromCite(key: string, cite: GenericNode, counts: Counts, doi?: st
   }
   if (bibtexLines.length === 1) {
     counts.unprocessed += 1;
-    // console.log(`This needs addressing: ${key}`);
+    bibtexLines.push(`  note = {${toText(cite)}}`);
   } else {
     counts.bibtex += 1;
     counts.lostRefItems.push(...skipped);
@@ -284,7 +282,7 @@ function processRef(
   const footnotes: GenericNode[] = [];
   const bibtexEntries: string[] = [];
   ref.children?.forEach((child) => {
-    if (['element-citation', 'mixed-citation'].includes(child.type)) {
+    if (['element-citation', 'mixed-citation', 'citation'].includes(child.type)) {
       if (!toText(child)) return;
       const cite = processRefCite(child, identifier, pmidCache, counts, dois);
       refLookup[identifier].push(cite.ref);
@@ -320,14 +318,13 @@ function processRef(
  * This function also writes a bibtex file if necessary and appends footnotes
  * to the jats tree.
  */
-export async function processJatsReferences(jats: Jats, opts?: Options) {
+export function processJatsReferences(body: Body, references: Reference[], opts?: Options) {
   const dir = opts?.dir ?? '.';
   const bibfile = path.join(dir, 'main.bib');
-  const refs = jats.references;
+  const pmidCache = opts?.pmidCache ?? {};
   let refLookup: Record<string, ProcessedReference[]> = {};
   const footnotes: GenericNode[] = [];
   const bibtexEntries: string[] = [];
-  const pmidCache = await getPMIDLookup(refs, dir);
   const counts: Counts = {
     dois: 0,
     bibtex: 0,
@@ -335,7 +332,7 @@ export async function processJatsReferences(jats: Jats, opts?: Options) {
     lostRefs: [],
     lostRefItems: [],
   };
-  refs.forEach((ref) => {
+  references.forEach((ref) => {
     const {
       refLookup: newRefLookup,
       footnotes: newFootnotes,
@@ -347,7 +344,7 @@ export async function processJatsReferences(jats: Jats, opts?: Options) {
   });
   if (opts?.logInfo) {
     opts.logInfo.references = {
-      total: refs.length,
+      total: references.length,
       dois: counts.dois,
       bibtex: counts.bibtex,
       footnotes: footnotes.length,
@@ -376,7 +373,7 @@ export async function processJatsReferences(jats: Jats, opts?: Options) {
     fs.writeFileSync(bibfile, bibtexEntries.join('\n\n'));
   }
   if (footnotes.length) {
-    jats.body?.children.push({ type: 'fn-group', children: footnotes });
+    body.children.push({ type: 'fn-group', children: footnotes });
   }
   return refLookup;
 }
@@ -389,7 +386,7 @@ export async function processJatsReferences(jats: Jats, opts?: Options) {
  *
  * Returns PMID -> DOI lookup dictionary
  */
-async function getPMIDLookup(refs: Reference[], dir: string) {
+export async function getPMIDLookup(refs: Reference[], dir: string) {
   const pmids = refs
     .map((ref) => {
       const pmidElement = select('ext-link,[pub-id-type=pmid]', ref);

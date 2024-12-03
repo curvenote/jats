@@ -1,14 +1,13 @@
 import type { PageFrontmatter } from 'myst-frontmatter';
-import type { GenericNode, MessageInfo } from 'myst-common';
+import type { GenericNode, GenericParent, MessageInfo } from 'myst-common';
 import type { Jats } from 'jats-xml';
-import type { Root } from 'myst-spec';
 import type { VFile } from 'vfile';
 
 export type Handler = (node: GenericNode, state: IJatsParser, parent: any) => void;
 
 export type JatsResult = {
-  references: { order: string[]; data: Record<string, { html: string; doi: string }> };
-  tree: Root;
+  tree: GenericParent;
+  frontmatter: PageFrontmatter;
 };
 
 export type MathPlugins = Required<PageFrontmatter>['math'];
@@ -18,6 +17,7 @@ export type Options = {
   handlers?: Record<string, Handler>;
   dir?: string;
   logInfo?: Record<string, any>;
+  pmidCache?: Record<string, string | null>;
   // If true, this will leave citations with DOIs to be resolved later
   dois?: boolean;
   // If true, this will write a bibtex file, as necessary

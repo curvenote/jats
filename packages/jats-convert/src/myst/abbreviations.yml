@@ -1,0 +1,74 @@
+cases:
+  - title: Basic text has no abbreviations
+    text: Hello World
+    abbreviations: {}
+  - title: Parenthetical with spaces is not abbreviation
+    text: Hello World (H W)
+    abbreviations: {}
+  - title: Basic abbreviation is parsed
+    text: Hello World (HW)
+    abbreviations:
+      HW: Hello World
+  - title: Basic abbreviation ignores capitals
+    text: hello world (HW)
+    abbreviations:
+      HW: hello world
+  - title: Basic abbreviation allows words before
+    text: hi wld hello world (HW)
+    abbreviations:
+      HW: hello world
+  - title: Abbreviation followed by period is parsed
+    text: Hello World (HW).
+    abbreviations:
+      HW: Hello World
+  - title: Newline before abbreviation is ignored
+    text: |
+      Hello World
+      (HW)
+    abbreviations: {}
+  - title: Abbreviation with hyphen is parsed
+    text: Hello World (H-W)
+    abbreviations:
+      H-W: Hello World
+  - title: Abbreviation text with hyphen is parsed
+    text: Hello-World (HW)
+    abbreviations:
+      HW: Hello-World
+  - title: Abbreviations can include all little words
+    text: Hello Andrew and all World (HaaaW)
+    abbreviations:
+      HaaaW: Hello Andrew and all World
+  - title: Abbreviations may include some little words
+    text: Hello Andrew and all World (HaaW)
+    abbreviations:
+      HaaW: Hello Andrew and all World
+  - title: Abbreviations may include no little words
+    text: Hello Andrew and all World (HaW)
+    abbreviations:
+      HaW: Hello Andrew and all World
+  - title: Abbreviations may not skip big words
+    text: Hello Andrew and all World (HW)
+    abbreviations: {}
+  - title: Multiple abbreviations are parsed
+    text: Welcome. Hello World (HW). How are you? Is this okay (OK)?
+    abbreviations:
+      HW: Hello World
+      OK: okay
+  - title: Compound words are parsed
+    text: Hello World (HWd)
+    abbreviations:
+      HWd: Hello World
+  - title: Compound words are parsed with double letters
+    text: Hello Dude (HDd)
+    abbreviations:
+      HDd: Hello Dude
+  - title: Compound words do not allow out-of-order
+    text: Hello Dude (HDdue)
+    abbreviations: {}
+  - title: Abbr with lower-case s
+    text: high sensitivity C reactive protein (hsCRP)
+    abbreviations:
+      hsCRP: high sensitivity C reactive protein
+  - title: Single character is not abbreviation
+    text: See figure (f) please
+    abbreviations: {}

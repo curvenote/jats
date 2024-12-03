@@ -2,11 +2,20 @@ import type { Plugin } from 'unified';
 import type { GenericNode, GenericParent } from 'myst-common';
 import { liftChildren, toText } from 'myst-common';
 import { blockNestingTransform } from 'myst-transforms';
-import { select } from 'unist-util-select';
+import { select, selectAll } from 'unist-util-select';
 import { remove } from 'unist-util-remove';
 
+const SECTION_TYPES = ['sec', 'ack', 'app'];
+
 function isSection(node: GenericNode) {
-  return node.type === 'sec' || node.type === 'ack';
+  return SECTION_TYPES.includes(node.type);
+}
+
+function liftApps(tree: GenericNode) {
+  selectAll('app-group', tree).forEach((group) => {
+    group.type = '__lift__';
+  });
+  liftChildren(tree, '__lift__');
 }
 
 function recurseSections(tree: GenericNode, depth = 1, titleType?: 'heading' | 'strong'): void {
@@ -32,6 +41,8 @@ function recurseSections(tree: GenericNode, depth = 1, titleType?: 'heading' | '
       }
     }
     if (sec.type === 'ack') sec.part = 'acknowledgments';
+    if (sec.type === 'app') sec.part = 'appendix';
+    sec.type = 'sec';
     recurseSections(sec, depth + 1, titleType);
   });
 }
@@ -45,6 +56,7 @@ function recurseSections(tree: GenericNode, depth = 1, titleType?: 'heading' | '
  * - Flatten the sections
  */
 export function sectionTransform(tree: GenericParent, titleType?: 'heading' | 'strong') {
+  liftApps(tree);
   recurseSections(tree, 1, titleType);
   remove(tree, '__delete__');
   const topSections = tree.children?.filter((n) => isSection(n));
