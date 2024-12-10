@@ -35,22 +35,20 @@ import { floatToEndTransform } from './transforms/supplementary.js';
 import { dataAvailabilityTransform } from './transforms/parts.js';
 import { abbreviationsFromTree } from './myst/abbreviations.js';
 
-enum ImageExtensions {
-  png = '.png',
-  jpg = '.jpg',
-  jpeg = '.jpeg',
-  svg = '.svg',
-  gif = '.gif',
-  tiff = '.tiff',
-  tif = '.tif',
-  pdf = '.pdf',
-  eps = '.eps',
-  webp = '.webp',
-  mp4 = '.mp4',
-  mov = '.mov',
-  avi = '.avi',
-}
-const KNOWN_IMAGE_EXTENSIONS = Object.values(ImageExtensions);
+const MEDIA_FIGURE_EXTENSIONS = [
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.svg',
+  '.gif',
+  '.tiff',
+  '.tif',
+  '.eps',
+  '.webp',
+  '.mp4',
+  '.mov',
+  '.avi',
+];
 
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
@@ -440,7 +438,7 @@ const handlers: Record<string, Handler> = {
     if (caption?.children?.length === 1 && caption.children[0].type === 'p') {
       caption = caption.children[0];
     }
-    if (url && KNOWN_IMAGE_EXTENSIONS.find((ext) => url.endsWith(ext))) {
+    if (url && MEDIA_FIGURE_EXTENSIONS.find((ext) => url.endsWith(ext))) {
       const title = select('title', media) as GenericNode | undefined;
       state.openNode('container', { label, identifier, kind: 'figure' });
       const wasInContainer = state.data.isInContainer;
