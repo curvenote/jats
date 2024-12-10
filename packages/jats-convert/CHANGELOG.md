@@ -1,5 +1,15 @@
 # jats-convert
 
+## 1.0.15
+
+### Patch Changes
+
+- aa43f62: Create figure from supplementary material media
+- Updated dependencies [aa43f62]
+  - jats-tags@1.0.15
+  - jats-xml@1.0.15
+  - jats-fetch@1.0.15
+
 ## 1.0.14
 
 ### Patch Changes

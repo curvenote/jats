@@ -1,5 +1,11 @@
 # jats-tags
 
+## 1.0.15
+
+### Patch Changes
+
+- aa43f62: Create figure from supplementary material media
+
 ## 1.0.14
 
 ### Patch Changes
