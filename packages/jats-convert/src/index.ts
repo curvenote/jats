@@ -35,6 +35,21 @@ import { floatToEndTransform } from './transforms/supplementary.js';
 import { dataAvailabilityTransform } from './transforms/parts.js';
 import { abbreviationsFromTree } from './myst/abbreviations.js';
 
+const MEDIA_FIGURE_EXTENSIONS = [
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.svg',
+  '.gif',
+  '.tiff',
+  '.tif',
+  '.eps',
+  '.webp',
+  '.mp4',
+  '.mov',
+  '.avi',
+];
+
 function refTypeToReferenceKind(kind?: RefType): string | undefined {
   switch (kind) {
     case RefType.sec:
@@ -405,13 +420,52 @@ const handlers: Record<string, Handler> = {
     }
   },
   ['supplementary-material'](node, state) {
-    if (node.id) {
-      const { label, identifier } = normalizeLabel(node.id) ?? {};
-      state.openNode('div', { label, identifier });
+    const { label, identifier } = normalizeLabel(node.id) ?? {};
+    let maybeCaption: GenericNode | undefined;
+    let media: GenericNode | undefined;
+    if (node.children?.length === 1 && node.children[0].type === 'media') {
+      media = node.children[0];
+    } else if (
+      node.children?.length === 2 &&
+      node.children[0].type === 'label' &&
+      node.children[1].type === 'media'
+    ) {
+      maybeCaption = node.children[0];
+      media = node.children[1];
     }
-    state.renderChildren(node);
-    if (node.id) {
+    const url = media?.['xlink:href'];
+    let caption = (select('caption', media) ?? maybeCaption) as GenericNode | undefined;
+    if (caption?.children?.length === 1 && caption.children[0].type === 'p') {
+      caption = caption.children[0];
+    }
+    if (url && MEDIA_FIGURE_EXTENSIONS.find((ext) => url.endsWith(ext))) {
+      const title = select('title', media) as GenericNode | undefined;
+      state.openNode('container', { label, identifier, kind: 'figure' });
+      const wasInContainer = state.data.isInContainer;
+      state.data.isInContainer = true;
+      state.addLeaf('image', { url });
+      state.openNode('caption');
+      state.openNode('link', { url });
+      if (title) {
+        state.openNode('strong');
+        state.renderChildren(title);
+        state.closeNode();
+      }
+      if (caption) {
+        state.renderChildren(caption);
+      }
       state.closeNode();
+      state.closeNode();
+      state.closeNode();
+      state.data.isInContainer = wasInContainer;
+    } else {
+      if (node.id) {
+        state.openNode('div', { label, identifier });
+      }
+      state.renderChildren(node);
+      if (node.id) {
+        state.closeNode();
+      }
     }
   },
   ['app-group'](node, state) {
