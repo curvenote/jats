@@ -270,7 +270,7 @@ const handlers: Record<string, Handler> = {
   },
   fig(node, state) {
     const caption = select('caption', node) as GenericNode;
-    const graphic = select('graphic', node) as GenericNode;
+    const graphic = select('graphic,media', node) as GenericNode;
     const title = select('title', node) as GenericNode;
     const { label, identifier } = normalizeLabel(node.id) ?? {};
     state.openNode('container', { label, identifier, kind: 'figure' });
@@ -395,6 +395,7 @@ const handlers: Record<string, Handler> = {
           kind: 'narrative',
         });
         return;
+      case RefType.video:
       case RefType.app:
       case RefType.boxedText:
       case RefType.media:
@@ -627,7 +628,7 @@ export const jatsConvertPlugin: Plugin<[Jats, Options?], Body, Body> = function 
     dataAvailabilityTransform(body);
     const refLookup = processJatsReferences(body, jats.references, opts);
     basicTransformations(body, file);
-    journalTransforms(body);
+    journalTransforms(jats.tree, body);
     const state = new JatsParser(file, jats, opts);
     state.renderChildren(body);
     while (state.stack.length > 1) state.closeNode();

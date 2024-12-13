@@ -1,6 +1,7 @@
 import type { Plugin } from 'unified';
 import type { VFile } from 'vfile';
 import type { Body } from 'jats-tags';
+import type { GenericNode } from 'myst-common';
 import { admonitionTransform } from './admonitions.js';
 import { graphicToBioRxivUrl } from './biorxiv.js';
 import { figCaptionTitleTransform } from './figureCaptions.js';
@@ -28,6 +29,6 @@ export const basicTransformationsPlugin: Plugin<[], Body, Body> = () => (body, f
   basicTransformations(body, file);
 };
 
-export function journalTransforms(body: Body) {
-  graphicToBioRxivUrl(body);
+export function journalTransforms(fullTree: GenericNode, body: Body) {
+  graphicToBioRxivUrl(fullTree, body);
 }
