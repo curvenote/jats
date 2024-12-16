@@ -73,17 +73,22 @@ export class Jats {
     }
     const { declaration, elements } = this.raw;
     this.declaration = declaration?.attributes;
-    if (elements?.length && elements[0].type !== 'doctype') {
+    const filteredElements = elements?.filter((elem) => elem.type !== 'comment');
+    if (filteredElements?.length && filteredElements[0].type !== 'doctype') {
       this.log?.warn('JATS is missing DOCTYPE declaration');
-      elements.unshift({ type: 'doctype' });
+      filteredElements.unshift({ type: 'doctype' });
     }
     if (
-      !(elements?.length === 2 && elements[0].type === 'doctype' && hasSingleArticle(elements[1]))
+      !(
+        filteredElements?.length === 2 &&
+        filteredElements[0].type === 'doctype' &&
+        hasSingleArticle(filteredElements[1])
+      )
     ) {
       throw new Error('JATS must be structured as <!DOCTYPE><article>...</article>');
     }
-    this.doctype = elements[0].doctype;
-    const converted = convertToUnist(elements[1]);
+    this.doctype = filteredElements[0].doctype;
+    const converted = convertToUnist(filteredElements[1]);
     this.tree = select('article', converted) as GenericParent;
     this.log?.debug(toc('Parsed and converted JATS to unist tree in %s'));
   }

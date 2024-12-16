@@ -53,4 +53,5 @@ export enum RefType {
   /** the following are _not_ a recommended ref-types, but are used encountered in JATS*/
   'ref' = 'ref',
   'media' = 'media',
+  'video' = 'video',
 }
