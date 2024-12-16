@@ -18,7 +18,10 @@ export function admonitionTransform(tree: GenericParent, file: VFile) {
   captions.forEach((caption) => {
     const title = select(Tags.title, caption) as GenericParent;
     if (!title) {
-      fileWarn(file, '', { node: caption, ruleId: RuleId.jatsParses });
+      fileWarn(file, 'Encountered boxed-text without title', {
+        node: caption,
+        ruleId: RuleId.jatsParses,
+      });
       return;
     }
     caption.type = 'admonitionTitle';

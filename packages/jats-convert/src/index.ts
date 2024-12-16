@@ -227,7 +227,7 @@ const handlers: Record<string, Handler> = {
       const { label, identifier } = normalizeLabel(node.id) ?? {};
       state.openNode('div', { label, identifier });
     }
-    state.renderInline(node, 'admonition', { kind: 'info' });
+    state.renderInline(node, 'admonition', { kind: 'note' });
     if (node.id) {
       state.closeNode();
     }
